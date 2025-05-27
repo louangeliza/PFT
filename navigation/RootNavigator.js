@@ -30,6 +30,7 @@ const RootNavigator = () => {
 
   const handleLogin = async (userData) => {
     try {
+      console.log('Handling login with user data:', userData);
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
     } catch (error) {

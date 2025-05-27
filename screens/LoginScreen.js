@@ -18,11 +18,15 @@ const LoginScreen = ({ navigation, route }) => {
       setLoading(true);
       const user = await login(username, password);
       
-      if (route.params?.onLogin) {
-        await route.params.onLogin(user);
-      } else {
+      // Get the onLogin callback from route params
+      const onLogin = route.params?.onLogin;
+      if (!onLogin) {
+        console.error('Login callback not found in route params:', route.params);
         throw new Error('Login callback not found');
       }
+
+      // Call the onLogin callback
+      await onLogin(user);
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Error', error.message || 'Login failed. Please try again.');

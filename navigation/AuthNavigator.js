@@ -5,7 +5,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 
 const Stack = createStackNavigator();
 
-const AuthNavigator = () => {
+const AuthNavigator = ({ route }) => {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -17,6 +17,7 @@ const AuthNavigator = () => {
       <Stack.Screen 
         name="Login" 
         component={LoginScreen}
+        initialParams={{ onLogin: route.params?.onLogin }}
         listeners={{
           focus: () => {
             console.log('Login screen focused');
