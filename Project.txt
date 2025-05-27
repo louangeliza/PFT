@@ -1,162 +1,134 @@
-Personal Money Manager (PMS) - Project Documentation
+1. User Authentication
+Start Screen
+→ "Login" (No registration)
 
-1. System Architecture
--------------------
-The application follows a client-server architecture with the following components:
+Login Screen
 
-1.1 Frontend (React Native Mobile App)
-- React Native for cross-platform mobile development
-- React Navigation for screen navigation
-- React Native Paper for UI components
-- React Native Chart Kit for data visualization
-- AsyncStorage for local data persistence
+Username
 
-1.2 Backend (Mock API)
-- RESTful API endpoints
-- JSON data storage
-- User authentication and authorization
-- Data validation and error handling
+Password
 
-2. Data Flow Diagram
-------------------
-[Client Side]
-User Interface (Screens) → Context Providers → Services → API Calls
+📡 Check credentials using:
+GET https://67ac71475853dfff53dab92a.mockapi.io/api/v1/users
 
-[Server Side]
-API Endpoints → Data Processing → Mock Database
+✅ If a match is found → Redirect to Dashboard
+❌ If not → Show: "Invalid username or password"
 
-3. API Endpoints
---------------
-3.1 Authentication
-- POST /api/v1/users
-  * Register new user
-  * Request: { username, password, createdAt }
-  * Response: { id, username, createdAt }
+2. Dashboard / Home
+Greeting: "Welcome, [User Name]"
 
-- GET /api/v1/users
-  * Get all users (for login validation)
-  * Response: Array of user objects
+At a glance:
 
-3.2 Expenses
-- GET /api/v1/expenses
-  * Get all expenses for current user
-  * Response: Array of expense objects
+🔢 Today's Total Spending
 
-- POST /api/v1/expenses
-  * Create new expense
-  * Request: { amount, category, description, createdAt, userId }
-  * Response: Created expense object
+📆 Monthly Budget Progress
 
-- PUT /api/v1/expenses/:id
-  * Update existing expense
-  * Request: { amount, category, description }
-  * Response: Updated expense object
+🔔 Alerts if nearing budget
 
-- DELETE /api/v1/expenses/:id
-  * Delete expense
-  * Response: Success message
+Sections:
 
-4. Application Pages/Screens
--------------------------
-4.1 Authentication Screens
-- LoginScreen
-  * Username/password input
-  * Login button
-  * Link to registration
-  * Error handling
+➕ “Add New Expense”
 
-- RegisterScreen
-  * Username/password input
-  * Password confirmation
-  * Register button
-  * Link to login
-  * Error handling
+📊 Spending Trends Chart
 
-4.2 Main Screens
-- HomeScreen
-  * Recent expenses list
-  * Total expenses summary
-  * Quick add expense button
-  * Navigation to other screens
+📂 “View All Expenses”
 
-- AddExpenseScreen
-  * Amount input
-  * Category selection
-  * Description input
-  * Date picker
-  * Save button
+3. Add New Expense
+User inputs:
 
-- StatisticsScreen
-  * Monthly spending chart
-  * Category breakdown pie chart
-  * Daily spending chart (30 days)
-  * Loading states
-  * No data states
+📝 Description
 
-- ProfileScreen
-  * User information
-  * Logout button
-  * Settings (if applicable)
+💰 Amount
 
-5. Data Models
-------------
-5.1 User
-{
-  id: string,
-  username: string,
-  password: string,
-  createdAt: string
-}
+📂 Category (e.g., Food, Transport)
 
-5.2 Expense
-{
-  id: string,
-  userId: string,
-  amount: number,
-  category: string,
-  description: string,
-  createdAt: string
-}
+📅 Date (default: today)
 
-6. State Management
-----------------
-6.1 Context Providers
-- AuthContext
-  * User authentication state
-  * Login/logout functions
-  * User data
+🔄 API Call: POST /expenses
+✅ Validates fields (e.g., amount must be numeric)
+⚠️ Show errors like: "Please enter a valid amount"
 
-6.2 Local Storage
-- AsyncStorage
-  * User session
-  * Authentication token
-  * User preferences
+4. View All Expenses
+Fetch list via:
+GET /expenses
 
-7. Navigation Structure
---------------------
-RootNavigator
-├── AuthNavigator
-│   ├── LoginScreen
-│   └── RegisterScreen
-└── MainNavigator
-    ├── HomeScreen
-    ├── AddExpenseScreen
-    ├── StatisticsScreen
-    └── ProfileScreen
+Show:
 
-8. Security Considerations
------------------------
-- Password hashing (handled by mock API)
-- Secure storage of user credentials
-- Input validation
-- Error handling
-- Session management
+Description
 
-9. Error Handling
---------------
-- Network errors
-- Authentication errors
-- Input validation errors
-- Data processing errors
-- User feedback through alerts
+Amount
+
+Date
+
+Category
+
+🔍 Filter by Date / Category
+🖱 Click to open → Expense Details
+
+5. Expense Details
+Get by ID:
+GET /expenses/{id}
+
+Display:
+
+Description
+
+Category
+
+Date
+
+Amount
+
+Notes (if any)
+
+🗑 “Delete” button:
+→ DELETE /expenses/{id}
+
+6. Budget Management
+User can:
+
+Set Monthly Budget
+
+Set Budget per Category (optional)
+
+Update Budget Anytime
+
+Stored locally (e.g., AsyncStorage)
+⏰ Budget logic runs in-app: compares expense total vs. set budget
+
+7. Notifications for Budget Limits
+🔔 Show in-app alerts (toast, modal) when:
+
+Spending reaches 80%, 100%, or exceeds budget
+
+Optional: Expo Push Notifications
+
+Examples:
+
+"⚠️ You've used 90% of your Food budget."
+"✅ You stayed within budget this week."
+
+8. Spending Analytics / Charts
+In Dashboard:
+
+📊 Pie Chart: Expense by Category
+
+📈 Bar/Line Chart: Spending over Time
+
+🧭 Budget Usage Gauge
+
+Use libraries like:
+
+react-native-chart-kit
+
+victory-native
+
+9. Expense History
+Display list of past expenses:
+
+Sorted by Date or Category
+
+Show totals per month
+
+Option to search/filter
 

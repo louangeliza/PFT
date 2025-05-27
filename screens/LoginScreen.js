@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
-import { login } from '../services/auth';
+import { login } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = ({ navigation, route }) => {
   const [username, setUsername] = useState('');
@@ -9,31 +10,35 @@ const LoginScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    console.log('Login attempt with:', { username, password });
-    
     if (!username || !password) {
-      console.log('Login validation failed: Empty fields');
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     try {
       setLoading(true);
-      console.log('Calling login service...');
+      console.log('Attempting login...');
       const user = await login(username, password);
       console.log('Login successful, user:', user);
       
-      // Call the onLogin callback from route params
+      // Store user data
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      console.log('User data stored in AsyncStorage');
+
+      // Call the onLogin callback if it exists
       if (route.params?.onLogin) {
         console.log('Calling onLogin callback');
         route.params.onLogin(user);
       } else {
-        console.error('No onLogin callback found');
-        Alert.alert('Error', 'Navigation failed. Please try again.');
+        console.log('No onLogin callback found, navigating directly');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
       }
     } catch (error) {
-      console.error('Login screen error:', error);
-      Alert.alert('Error', error.message || 'Login failed');
+      console.error('Login error:', error);
+      Alert.alert('Error', error.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -41,26 +46,23 @@ const LoginScreen = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
+      <Text style={styles.title}>Welcome Back!</Text>
+      <Text style={styles.subtitle}>Sign in to continue</Text>
       <TextInput
         label="Username"
         value={username}
-        onChangeText={(text) => {
-          console.log('Username changed:', text);
-          setUsername(text);
-        }}
+        onChangeText={setUsername}
         style={styles.input}
+        mode="outlined"
         autoCapitalize="none"
       />
       <TextInput
         label="Password"
         value={password}
-        onChangeText={(text) => {
-          console.log('Password changed:', text.length, 'characters');
-          setPassword(text);
-        }}
+        onChangeText={setPassword}
         secureTextEntry
         style={styles.input}
+        mode="outlined"
       />
       <Button
         mode="contained"
@@ -70,13 +72,6 @@ const LoginScreen = ({ navigation, route }) => {
         disabled={loading}
       >
         Login
-      </Button>
-      <Button
-        mode="text"
-        onPress={() => navigation.navigate('Register')}
-        style={styles.link}
-      >
-        Don't have an account? Register
       </Button>
     </View>
   );
@@ -90,22 +85,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 30,
     textAlign: 'center',
+    marginBottom: 10,
     color: '#333',
   },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 30,
+    color: '#666',
+  },
   input: {
-    marginBottom: 16,
-    backgroundColor: '#fff',
+    marginBottom: 15,
   },
   button: {
-    marginTop: 8,
+    marginTop: 10,
     paddingVertical: 8,
-  },
-  link: {
-    marginTop: 16,
   },
 });
 
