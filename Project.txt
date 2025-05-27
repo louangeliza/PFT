@@ -1,0 +1,130 @@
+1. User Authentication
+Start Screen
+
+"Login" / "Register"
+
+Register Screen
+
+Name, Email, Password, Confirm Password
+
+Login Screen
+
+Email, Password
+
+✅ Successful Login → Redirect to Dashboard
+
+2. Home / Dashboard
+Greeting: "Welcome, [User]"
+
+Search or browse nearby parking lots
+
+List of Parking Lots:
+
+Name, Location, Vacant Spaces, Fee/hr
+
+“View Details” → leads to booking screen
+
+3. View Parking Lot Details
+Show:
+
+Parking Lot Name & Location
+
+Number of Vacant Spaces
+
+Fee per Hour
+
+Map / Directions (optional)
+
+“Book Parking” button
+
+4. Booking Form
+User fills:
+
+Car Plate Number
+
+Select Vehicle Type (optional)
+
+Choose Entry Time (default = now)
+
+Choose Expected Exit Time
+
+App calculates estimated fee:
+Estimated Fee = Fee/hr * (Exit - Entry)
+
+Button: "Confirm Booking & Get Ticket"
+
+5. Booking Confirmation / Ticket Screen
+Display:
+
+Ticket ID (unique)
+
+Parking Lot Name
+
+Plate Number
+
+Entry Date & Time
+
+Estimated Exit Time
+
+Estimated Fee
+
+Button: “Track Parking”
+
+6. Active Parking Session (Real-Time Tracker)
+Live Timer or Clock (showing time parked)
+
+Plate Number
+
+Current Parking Duration
+
+Estimated Fee (based on ongoing time)
+
+Button: “Exit Parking”
+
+7. Exit Parking (Finalize Session)
+User clicks “Exit Parking”
+
+App captures actual exit time
+
+Backend calculates real charge:
+Actual Fee = Fee/hr * Actual Duration
+
+Display:
+
+Entry → Exit Duration
+
+Total Charged
+
+Digital Receipt with breakdown
+
+8. Payment / Confirmation
+If integrated with payments:
+
+Pay with Wallet / Card / Mobile Money
+
+Else: “Pay on Site” or “Pay Later” confirmation
+
+Thank You message
+
+Button: “Back to Home” or “View History”
+
+9. Booking & Payment History
+List of:
+
+All Past Parkings
+
+Plate Number
+
+Parking Lot
+
+Entry & Exit Times
+
+Amount Paid
+
+Status: Paid / Unpaid / Overdue
+
+
+
+
+
+https://68333d9b464b499636fecb2e.mockapi.io/
