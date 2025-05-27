@@ -44,10 +44,9 @@ const NotificationsScreen = () => {
     <Card style={styles.notificationCard}>
       <Card.Content style={styles.cardContent}>
         <View style={styles.notificationContent}>
-          <Text style={styles.notificationTitle}>{item.title}</Text>
           <Text style={styles.notificationMessage}>{item.message}</Text>
           <Text style={styles.notificationTime}>
-            {new Date(item.timestamp).toLocaleString()}
+            {new Date(item.createdAt).toLocaleString()}
           </Text>
         </View>
         <IconButton
@@ -63,7 +62,7 @@ const NotificationsScreen = () => {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#666" />
       </View>
     );
   }
@@ -104,6 +103,7 @@ const styles = StyleSheet.create({
   notificationCard: {
     marginBottom: 12,
     elevation: 2,
+    backgroundColor: '#fff',
   },
   cardContent: {
     flexDirection: 'row',
@@ -114,14 +114,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
-  notificationTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
   notificationMessage: {
     fontSize: 14,
-    color: '#666',
+    color: '#333',
     marginBottom: 4,
   },
   notificationTime: {

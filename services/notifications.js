@@ -77,6 +77,11 @@ export const saveNotifications = async (notifications) => {
 
 export const addBudgetAlert = async (currentAmount, budgetAmount, budgetType = 'monthly') => {
   try {
+    // Only proceed if there are actual expenses (currentAmount > 0)
+    if (currentAmount <= 0) {
+      return null;
+    }
+
     // Get existing notifications
     const notifications = await getNotifications();
     

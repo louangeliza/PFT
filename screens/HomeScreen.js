@@ -249,54 +249,54 @@ const HomeScreen = ({ route }) => {
         <View style={styles.statsContainer}>
           <Card style={styles.statsCard}>
             <Card.Content>
-              <Title>Today's Spending</Title>
-              <Paragraph style={styles.amountText}>
-                ${formatAmount(todayTotal)}
-              </Paragraph>
+              <Title style={styles.statsTitle}>Today's Spending</Title>
+              <Text style={styles.statsAmount}>${formatAmount(todayTotal)}</Text>
             </Card.Content>
           </Card>
-
           <Card style={styles.statsCard}>
             <Card.Content>
-              <Title>{activeBudget ? `${activeBudget.type === 'daily' ? 'Daily' : 'Monthly'} Budget` : 'Monthly Budget'}</Title>
-              <Paragraph style={styles.amountText}>
-                ${formatAmount(activeBudget ? (activeBudget.type === 'daily' ? todayTotal : monthlyTotal) : monthlyTotal)} / ${formatAmount(activeBudget ? activeBudget.amount : monthlyBudget)}
-              </Paragraph>
-              <View style={styles.progressBar}>
-                <View 
-                  style={[
-                    styles.progressFill, 
-                    { width: `${Math.min(budgetProgress, 100)}%`, backgroundColor: budgetColor }
-                  ]} 
-                />
+              <Title style={styles.statsTitle}>Monthly Total</Title>
+              <Text style={styles.statsAmount}>${formatAmount(monthlyTotal)}</Text>
+            </Card.Content>
+          </Card>
+        </View>
+
+        {activeBudget && (
+          <Card style={styles.budgetCard}>
+            <Card.Content>
+              <Title style={styles.budgetTitle}>
+                {activeBudget.type === 'daily' ? 'Daily' : 'Monthly'} Budget
+              </Title>
+              <View style={styles.budgetProgressContainer}>
+                <View style={[styles.budgetProgress, { width: `${Math.min(budgetProgress, 100)}%`, backgroundColor: budgetColor }]} />
               </View>
+              <Text style={styles.budgetAmount}>
+                ${formatAmount(activeBudget.type === 'daily' ? todayTotal : monthlyTotal)} / ${formatAmount(activeBudget.amount)}
+              </Text>
               {getBudgetMessage() && (
-                <Text style={[styles.warningText, { color: budgetColor }]}>
+                <Text style={[styles.budgetWarning, { color: budgetColor }]}>
                   {getBudgetMessage()}
                 </Text>
               )}
             </Card.Content>
           </Card>
-        </View>
-
-        <Text style={styles.sectionTitle}>Recent Expenses</Text>
-        {expenses.length === 0 ? (
-          <View style={styles.centered}>
-            <Text style={styles.noExpenses}>No expenses made recently</Text>
-            <Text style={styles.addExpenseHint}>Tap the + button to add an expense</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={expenses}
-            renderItem={renderExpense}
-            keyExtractor={item => item.id}
-            refreshing={loading}
-            onRefresh={loadExpenses}
-            contentContainerStyle={styles.list}
-            scrollEnabled={false}
-          />
         )}
+
+        <View style={styles.recentExpensesContainer}>
+          <Title style={styles.recentExpensesTitle}>Recent Expenses</Title>
+          {expenses.length === 0 ? (
+            <Text style={styles.noExpenses}>No expenses made recently</Text>
+          ) : (
+            <FlatList
+              data={expenses}
+              renderItem={renderExpense}
+              keyExtractor={item => item.id}
+              scrollEnabled={false}
+            />
+          )}
+        </View>
       </ScrollView>
+
       <FAB
         style={styles.fab}
         icon="plus"
@@ -311,43 +311,68 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     padding: 16,
   },
   statsCard: {
-    marginBottom: 16,
+    flex: 1,
+    marginHorizontal: 4,
+    backgroundColor: '#fff',
   },
-  amountText: {
-    fontSize: 24,
+  statsTitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+  statsAmount: {
+    fontSize: 20,
     fontWeight: 'bold',
-    marginTop: 8,
+    color: '#333',
   },
-  progressBar: {
+  budgetCard: {
+    margin: 16,
+    backgroundColor: '#fff',
+  },
+  budgetTitle: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
+  },
+  budgetProgressContainer: {
     height: 8,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#eee',
     borderRadius: 4,
-    marginTop: 8,
-    overflow: 'hidden',
+    marginBottom: 8,
   },
-  progressFill: {
+  budgetProgress: {
     height: '100%',
     borderRadius: 4,
   },
-  warningText: {
-    marginTop: 8,
-    fontWeight: '500',
+  budgetAmount: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 4,
   },
-  sectionTitle: {
-    fontSize: 20,
+  budgetWarning: {
+    fontSize: 14,
     fontWeight: 'bold',
-    padding: 16,
-    paddingBottom: 8,
   },
-  list: {
-    padding: 8,
+  recentExpensesContainer: {
+    padding: 16,
+  },
+  recentExpensesTitle: {
+    fontSize: 18,
+    color: '#333',
+    marginBottom: 16,
   },
   listItem: {
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
     marginBottom: 8,
     borderRadius: 8,
     elevation: 2,
@@ -356,43 +381,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 8,
+    padding: 12,
   },
   listItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
   expenseName: {
     fontSize: 16,
-    fontWeight: '500',
+    color: '#333',
   },
   expenseAmount: {
     fontSize: 14,
     color: '#666',
+  },
+  noExpenses: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 16,
+    marginTop: 16,
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 0,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  noExpenses: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#666',
-    textAlign: 'center',
-  },
-  addExpenseHint: {
-    color: '#666',
-    textAlign: 'center',
+    backgroundColor: '#666',
   },
 });
 
