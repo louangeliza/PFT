@@ -10,7 +10,7 @@ const StatisticsScreen = () => {
   const [loading, setLoading] = useState(true);
   const [monthlyData, setMonthlyData] = useState({ labels: [], datasets: [{ data: [] }] });
   const [categoryData, setCategoryData] = useState([]);
-  const [dailyData, setDailyData] = useState({ labels: [], datasets: [{ data: [] }] });
+  const [weeklyData, setWeeklyData] = useState({ labels: [], datasets: [{ data: [] }] });
 
   const screenWidth = Dimensions.get('window').width;
 
@@ -80,22 +80,34 @@ const StatisticsScreen = () => {
     console.log('Processed category data:', categoryChartData);
     setCategoryData(categoryChartData);
 
-    // Process daily data (last 30 days)
+    // Process weekly data (last 7 days)
     const dailyTotals = {};
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
+    // Initialize the last 7 days with 0
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toISOString().split('T')[0];
+      dailyTotals[dateKey] = 0;
+    }
+
+    // Fill in actual expense data
     data.forEach(expense => {
       const date = new Date(expense.createdAt);
-      if (date >= thirtyDaysAgo) {
-        const dayKey = date.toISOString().split('T')[0];
-        dailyTotals[dayKey] = (dailyTotals[dayKey] || 0) + Number(expense.amount);
+      date.setHours(0, 0, 0, 0);
+      const dateKey = date.toISOString().split('T')[0];
+      
+      // Only include expenses from the last 7 days
+      if (date >= new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)) {
+        dailyTotals[dateKey] = (dailyTotals[dateKey] || 0) + Number(expense.amount);
       }
     });
 
     // Sort days chronologically
     const sortedDays = Object.keys(dailyTotals).sort();
-    const dailyChartData = {
+    const weeklyChartData = {
       labels: sortedDays.map(key => {
         const date = new Date(key);
         return `${date.getMonth() + 1}/${date.getDate()}`;
@@ -104,8 +116,8 @@ const StatisticsScreen = () => {
         data: sortedDays.map(key => dailyTotals[key])
       }]
     };
-    console.log('Processed daily data:', dailyChartData);
-    setDailyData(dailyChartData);
+    console.log('Processed weekly data:', weeklyChartData);
+    setWeeklyData(weeklyChartData);
   };
 
   const getRandomColor = () => {
@@ -136,6 +148,35 @@ const StatisticsScreen = () => {
 
   return (
     <ScrollView style={styles.container}>
+      <Card style={styles.card}>
+        <Card.Content>
+          <Title style={styles.title}>Last 7 Days Spending</Title>
+          {weeklyData.labels && weeklyData.labels.length > 0 ? (
+            <LineChart
+              data={weeklyData}
+              width={screenWidth - 40}
+              height={220}
+              chartConfig={chartConfig}
+              style={styles.chart}
+              bezier
+              withDots={true}
+              withShadow={false}
+              withInnerLines={true}
+              withOuterLines={true}
+              withVerticalLines={false}
+              withHorizontalLines={true}
+              withVerticalLabels={true}
+              withHorizontalLabels={true}
+              fromZero={true}
+              yAxisLabel="$"
+              yAxisSuffix=""
+            />
+          ) : (
+            <Text style={styles.noData}>No data available for the last 7 days</Text>
+          )}
+        </Card.Content>
+      </Card>
+
       <Card style={styles.card}>
         <Card.Content>
           <Title style={styles.title}>Monthly Spending</Title>
@@ -170,28 +211,6 @@ const StatisticsScreen = () => {
             />
           ) : (
             <Text style={styles.noData}>No category data available</Text>
-          )}
-        </Card.Content>
-      </Card>
-
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title style={styles.title}>Daily Spending (Last 30 Days)</Title>
-          {dailyData.labels && dailyData.labels.length > 0 ? (
-            <BarChart
-              data={dailyData}
-              width={screenWidth - 40}
-              height={220}
-              chartConfig={chartConfig}
-              style={styles.chart}
-              showValuesOnTopOfBars
-              fromZero
-              yAxisLabel="$"
-              yAxisSuffix=""
-              withInnerLines={false}
-            />
-          ) : (
-            <Text style={styles.noData}>No daily data available</Text>
           )}
         </Card.Content>
       </Card>
