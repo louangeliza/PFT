@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, Alert, TouchableOpacity } from 'react-native';
-import { FAB, List, Text, ActivityIndicator, IconButton } from 'react-native-paper';
+import { View, StyleSheet, FlatList, Alert, TouchableOpacity, ScrollView } from 'react-native';
+import { FAB, List, Text, ActivityIndicator, IconButton, Card, Title, Paragraph } from 'react-native-paper';
 import { getExpenses, deleteExpense } from '../services/api';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,16 +8,66 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const HomeScreen = ({ route }) => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [todayTotal, setTodayTotal] = useState(0);
+  const [monthlyTotal, setMonthlyTotal] = useState(0);
+  const [monthlyBudget, setMonthlyBudget] = useState(1000); // Default budget
   const navigation = useNavigation();
 
   const formatAmount = (amount) => {
     try {
-      // Convert to number and handle potential string values
-      const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+      const numAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
       return isNaN(numAmount) ? '0.00' : numAmount.toFixed(2);
     } catch (error) {
       console.error('Error formatting amount:', error);
       return '0.00';
+    }
+  };
+
+  const getDisplayName = (email) => {
+    if (!email) return 'User';
+    // Get the part before @ and capitalize first letter
+    const username = email.split('@')[0];
+    return username.charAt(0).toUpperCase() + username.slice(1);
+  };
+
+  const calculateTotals = (expenses) => {
+    const today = new Date().toISOString().split('T')[0];
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    let todaySum = 0;
+    let monthSum = 0;
+
+    expenses.forEach(expense => {
+      const expenseDate = new Date(expense.createdAt);
+      const expenseDay = expenseDate.toISOString().split('T')[0];
+      
+      if (expenseDay === today) {
+        todaySum += Number(expense.amount);
+      }
+      
+      if (expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) {
+        monthSum += Number(expense.amount);
+      }
+    });
+
+    setTodayTotal(todaySum);
+    setMonthlyTotal(monthSum);
+  };
+
+  const loadUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
+      const budget = await AsyncStorage.getItem('monthlyBudget');
+      if (budget) {
+        setMonthlyBudget(Number(budget));
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
     }
   };
 
@@ -28,6 +78,7 @@ const HomeScreen = ({ route }) => {
       const data = await getExpenses();
       console.log('Expenses loaded:', data);
       setExpenses(data);
+      calculateTotals(data);
     } catch (error) {
       console.error('Error loading expenses:', error);
       if (error.message === 'User not logged in') {
@@ -41,18 +92,16 @@ const HomeScreen = ({ route }) => {
     }
   };
 
-  // Load expenses when the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
+      loadUserData();
       loadExpenses();
     }, [])
   );
 
-  // Handle refresh parameter from navigation
   useEffect(() => {
     if (route.params?.refresh) {
       loadExpenses();
-      // Clear the refresh parameter
       navigation.setParams({ refresh: undefined });
     }
   }, [route.params?.refresh]);
@@ -118,24 +167,69 @@ const HomeScreen = ({ route }) => {
     );
   }
 
+  const budgetProgress = (monthlyTotal / monthlyBudget) * 100;
+  const budgetColor = budgetProgress > 90 ? '#ff4444' : budgetProgress > 70 ? '#ffbb33' : '#00C851';
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Expenses</Text>
-      {expenses.length === 0 ? (
-        <View style={styles.centered}>
-          <Text style={styles.noExpenses}>No expenses found</Text>
-          <Text style={styles.addExpenseHint}>Tap the + button to add an expense</Text>
+      <ScrollView>
+        <View style={styles.header}>
+          <Text style={styles.welcomeText}>
+            Welcome, {getDisplayName(user?.username)}
+          </Text>
         </View>
-      ) : (
-        <FlatList
-          data={expenses}
-          renderItem={renderExpense}
-          keyExtractor={item => item.id}
-          refreshing={loading}
-          onRefresh={loadExpenses}
-          contentContainerStyle={styles.list}
-        />
-      )}
+
+        <View style={styles.statsContainer}>
+          <Card style={styles.statsCard}>
+            <Card.Content>
+              <Title>Today's Spending</Title>
+              <Paragraph style={styles.amountText}>
+                ${formatAmount(todayTotal)}
+              </Paragraph>
+            </Card.Content>
+          </Card>
+
+          <Card style={styles.statsCard}>
+            <Card.Content>
+              <Title>Monthly Budget</Title>
+              <Paragraph style={styles.amountText}>
+                ${formatAmount(monthlyTotal)} / ${formatAmount(monthlyBudget)}
+              </Paragraph>
+              <View style={styles.progressBar}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { width: `${Math.min(budgetProgress, 100)}%`, backgroundColor: budgetColor }
+                  ]} 
+                />
+              </View>
+              {budgetProgress > 90 && (
+                <Text style={[styles.warningText, { color: budgetColor }]}>
+                  ⚠️ You're close to your monthly budget!
+                </Text>
+              )}
+            </Card.Content>
+          </Card>
+        </View>
+
+        <Text style={styles.sectionTitle}>Recent Expenses</Text>
+        {expenses.length === 0 ? (
+          <View style={styles.centered}>
+            <Text style={styles.noExpenses}>No expenses found</Text>
+            <Text style={styles.addExpenseHint}>Tap the + button to add an expense</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={expenses}
+            renderItem={renderExpense}
+            keyExtractor={item => item.id}
+            refreshing={loading}
+            onRefresh={loadExpenses}
+            contentContainerStyle={styles.list}
+            scrollEnabled={false}
+          />
+        )}
+      </ScrollView>
       <FAB
         style={styles.fab}
         icon="plus"
@@ -150,10 +244,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  title: {
+  header: {
+    padding: 20,
+    backgroundColor: '#6200ee',
+  },
+  welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
-    padding: 20,
+    color: '#fff',
+  },
+  statsContainer: {
+    padding: 16,
+  },
+  statsCard: {
+    marginBottom: 16,
+  },
+  amountText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 8,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 4,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  warningText: {
+    marginTop: 8,
+    fontWeight: '500',
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    padding: 16,
+    paddingBottom: 8,
   },
   list: {
     padding: 8,

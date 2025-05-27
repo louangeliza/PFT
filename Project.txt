@@ -1,130 +1,134 @@
 1. User Authentication
 Start Screen
-
-"Login" / "Register"
-
-Register Screen
-
-Name, Email, Password, Confirm Password
+→ "Login" (No registration)
 
 Login Screen
 
-Email, Password
+Username
 
-✅ Successful Login → Redirect to Dashboard
+Password
 
-2. Home / Dashboard
-Greeting: "Welcome, [User]"
+📡 Check credentials using:
+GET https://67ac71475853dfff53dab92a.mockapi.io/api/v1/users
 
-Search or browse nearby parking lots
+✅ If a match is found → Redirect to Dashboard
+❌ If not → Show: "Invalid username or password"
 
-List of Parking Lots:
+2. Dashboard / Home
+Greeting: "Welcome, [User Name]"
 
-Name, Location, Vacant Spaces, Fee/hr
+At a glance:
 
-“View Details” → leads to booking screen
+🔢 Today's Total Spending
 
-3. View Parking Lot Details
+📆 Monthly Budget Progress
+
+🔔 Alerts if nearing budget
+
+Sections:
+
+➕ “Add New Expense”
+
+📊 Spending Trends Chart
+
+📂 “View All Expenses”
+
+3. Add New Expense
+User inputs:
+
+📝 Description
+
+💰 Amount
+
+📂 Category (e.g., Food, Transport)
+
+📅 Date (default: today)
+
+🔄 API Call: POST /expenses
+✅ Validates fields (e.g., amount must be numeric)
+⚠️ Show errors like: "Please enter a valid amount"
+
+4. View All Expenses
+Fetch list via:
+GET /expenses
+
 Show:
 
-Parking Lot Name & Location
+Description
 
-Number of Vacant Spaces
+Amount
 
-Fee per Hour
+Date
 
-Map / Directions (optional)
+Category
 
-“Book Parking” button
+🔍 Filter by Date / Category
+🖱 Click to open → Expense Details
 
-4. Booking Form
-User fills:
-
-Car Plate Number
-
-Select Vehicle Type (optional)
-
-Choose Entry Time (default = now)
-
-Choose Expected Exit Time
-
-App calculates estimated fee:
-Estimated Fee = Fee/hr * (Exit - Entry)
-
-Button: "Confirm Booking & Get Ticket"
-
-5. Booking Confirmation / Ticket Screen
-Display:
-
-Ticket ID (unique)
-
-Parking Lot Name
-
-Plate Number
-
-Entry Date & Time
-
-Estimated Exit Time
-
-Estimated Fee
-
-Button: “Track Parking”
-
-6. Active Parking Session (Real-Time Tracker)
-Live Timer or Clock (showing time parked)
-
-Plate Number
-
-Current Parking Duration
-
-Estimated Fee (based on ongoing time)
-
-Button: “Exit Parking”
-
-7. Exit Parking (Finalize Session)
-User clicks “Exit Parking”
-
-App captures actual exit time
-
-Backend calculates real charge:
-Actual Fee = Fee/hr * Actual Duration
+5. Expense Details
+Get by ID:
+GET /expenses/{id}
 
 Display:
 
-Entry → Exit Duration
+Description
 
-Total Charged
+Category
 
-Digital Receipt with breakdown
+Date
 
-8. Payment / Confirmation
-If integrated with payments:
+Amount
 
-Pay with Wallet / Card / Mobile Money
+Notes (if any)
 
-Else: “Pay on Site” or “Pay Later” confirmation
+🗑 “Delete” button:
+→ DELETE /expenses/{id}
 
-Thank You message
+6. Budget Management
+User can:
 
-Button: “Back to Home” or “View History”
+Set Monthly Budget
 
-9. Booking & Payment History
-List of:
+Set Budget per Category (optional)
 
-All Past Parkings
+Update Budget Anytime
 
-Plate Number
+Stored locally (e.g., AsyncStorage)
+⏰ Budget logic runs in-app: compares expense total vs. set budget
 
-Parking Lot
+7. Notifications for Budget Limits
+🔔 Show in-app alerts (toast, modal) when:
 
-Entry & Exit Times
+Spending reaches 80%, 100%, or exceeds budget
 
-Amount Paid
+Optional: Expo Push Notifications
 
-Status: Paid / Unpaid / Overdue
+Examples:
 
+"⚠️ You've used 90% of your Food budget."
+"✅ You stayed within budget this week."
 
+8. Spending Analytics / Charts
+In Dashboard:
 
+📊 Pie Chart: Expense by Category
 
+📈 Bar/Line Chart: Spending over Time
 
-https://68333d9b464b499636fecb2e.mockapi.io/
+🧭 Budget Usage Gauge
+
+Use libraries like:
+
+react-native-chart-kit
+
+victory-native
+
+9. Expense History
+Display list of past expenses:
+
+Sorted by Date or Category
+
+Show totals per month
+
+Option to search/filter
+
