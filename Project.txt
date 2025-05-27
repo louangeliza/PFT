@@ -1,3 +1,177 @@
+Personal Money Manager (PMS) - Project Documentation
+
+1. System Architecture
+-------------------
+The application follows a client-server architecture with the following components:
+
+1.1 Frontend (React Native Mobile App)
+- React Native for cross-platform mobile development
+- React Navigation for screen navigation
+- React Native Paper for UI components
+- React Native Chart Kit for data visualization
+- AsyncStorage for local data persistence
+
+1.2 Backend (Mock API)
+- RESTful API endpoints
+- JSON data storage
+- User authentication and authorization
+- Data validation and error handling
+
+2. Data Flow Diagram
+------------------
+[Client Side]
+User Interface (Screens) → Context Providers → Services → API Calls
+
+[Server Side]
+API Endpoints → Data Processing → Mock Database
+
+3. API Endpoints
+--------------
+3.1 Authentication
+- POST /api/v1/users
+  * Register new user
+  * Request: { username, password, createdAt }
+  * Response: { id, username, createdAt }
+
+- GET /api/v1/users
+  * Get all users (for login validation)
+  * Response: Array of user objects
+
+3.2 Expenses
+- GET /api/v1/expenses
+  * Get all expenses for current user
+  * Response: Array of expense objects
+
+- POST /api/v1/expenses
+  * Create new expense
+  * Request: { amount, category, description, createdAt, userId }
+  * Response: Created expense object
+
+- PUT /api/v1/expenses/:id
+  * Update existing expense
+  * Request: { amount, category, description }
+  * Response: Updated expense object
+
+- DELETE /api/v1/expenses/:id
+  * Delete expense
+  * Response: Success message
+
+4. Application Pages/Screens
+-------------------------
+4.1 Authentication Screens
+- LoginScreen
+  * Username/password input
+  * Login button
+  * Link to registration
+  * Error handling
+
+- RegisterScreen
+  * Username/password input
+  * Password confirmation
+  * Register button
+  * Link to login
+  * Error handling
+
+4.2 Main Screens
+- HomeScreen
+  * Recent expenses list
+  * Total expenses summary
+  * Quick add expense button
+  * Navigation to other screens
+
+- AddExpenseScreen
+  * Amount input
+  * Category selection
+  * Description input
+  * Date picker
+  * Save button
+
+- StatisticsScreen
+  * Monthly spending chart
+  * Category breakdown pie chart
+  * Daily spending chart (30 days)
+  * Loading states
+  * No data states
+
+- ProfileScreen
+  * User information
+  * Logout button
+  * Settings (if applicable)
+
+5. Data Models
+------------
+5.1 User
+{
+  id: string,
+  username: string,
+  password: string,
+  createdAt: string
+}
+
+5.2 Expense
+{
+  id: string,
+  userId: string,
+  amount: number,
+  category: string,
+  description: string,
+  createdAt: string
+}
+
+6. State Management
+----------------
+6.1 Context Providers
+- AuthContext
+  * User authentication state
+  * Login/logout functions
+  * User data
+
+6.2 Local Storage
+- AsyncStorage
+  * User session
+  * Authentication token
+  * User preferences
+
+7. Navigation Structure
+--------------------
+RootNavigator
+├── AuthNavigator
+│   ├── LoginScreen
+│   └── RegisterScreen
+└── MainNavigator
+    ├── HomeScreen
+    ├── AddExpenseScreen
+    ├── StatisticsScreen
+    └── ProfileScreen
+
+8. Security Considerations
+-----------------------
+- Password hashing (handled by mock API)
+- Secure storage of user credentials
+- Input validation
+- Error handling
+- Session management
+
+9. Error Handling
+--------------
+- Network errors
+- Authentication errors
+- Input validation errors
+- Data processing errors
+- User feedback through alerts
+
+10. Future Enhancements
+--------------------
+- Real backend implementation
+- Data export functionality
+- Budget planning features
+- Receipt scanning
+- Multiple currency support
+- Dark mode support
+- Offline support
+- Push notifications
+- Data backup and sync
+
 1. User Authentication
 Start Screen
 → "Login" (No registration)
@@ -27,11 +201,11 @@ At a glance:
 
 Sections:
 
-➕ “Add New Expense”
+➕ "Add New Expense"
 
 📊 Spending Trends Chart
 
-📂 “View All Expenses”
+📂 "View All Expenses"
 
 3. Add New Expense
 User inputs:
@@ -81,7 +255,7 @@ Amount
 
 Notes (if any)
 
-🗑 “Delete” button:
+🗑 "Delete" button:
 → DELETE /expenses/{id}
 
 6. Budget Management

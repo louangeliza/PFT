@@ -1,0 +1,175 @@
+@startuml System Architecture
+
+' Class Diagram
+class User {
+  +id: string
+  +username: string
+  +password: string
+  +createdAt: string
+}
+
+class Expense {
+  +id: string
+  +userId: string
+  +amount: number
+  +category: string
+  +description: string
+  +createdAt: string
+}
+
+class AuthContext {
+  +user: User
+  +isAuthenticated: boolean
+  +login(username: string, password: string): Promise<void>
+  +logout(): void
+  +register(username: string, password: string): Promise<void>
+}
+
+class ExpenseService {
+  +getExpenses(): Promise<Expense[]>
+  +createExpense(expense: Expense): Promise<Expense>
+  +updateExpense(id: string, expense: Expense): Promise<Expense>
+  +deleteExpense(id: string): Promise<void>
+}
+
+User "1" -- "0..*" Expense
+AuthContext --> User
+ExpenseService --> Expense
+
+@enduml
+
+@startuml Sequence Diagram - Login Flow
+
+actor User
+participant "LoginScreen" as LS
+participant "AuthContext" as AC
+participant "AuthService" as AS
+participant "MockAPI" as API
+database "AsyncStorage" as Storage
+
+User -> LS: Enter credentials
+LS -> AC: login(username, password)
+AC -> AS: validateCredentials()
+AS -> API: GET /api/v1/users
+API --> AS: Return users
+AS --> AC: Validate user
+AC -> Storage: Store user data
+AC --> LS: Update auth state
+LS --> User: Navigate to Home
+
+@enduml
+
+@startuml Component Diagram
+
+package "Frontend" {
+  [LoginScreen]
+  [RegisterScreen]
+  [HomeScreen]
+  [AddExpenseScreen]
+  [StatisticsScreen]
+  [ProfileScreen]
+  
+  package "Navigation" {
+    [RootNavigator]
+    [AuthNavigator]
+    [MainNavigator]
+  }
+  
+  package "Services" {
+    [AuthService]
+    [ExpenseService]
+  }
+  
+  package "Context" {
+    [AuthContext]
+  }
+}
+
+package "Backend" {
+  [MockAPI]
+  database "JSON Storage"
+}
+
+[LoginScreen] --> [AuthContext]
+[RegisterScreen] --> [AuthContext]
+[HomeScreen] --> [ExpenseService]
+[AddExpenseScreen] --> [ExpenseService]
+[StatisticsScreen] --> [ExpenseService]
+[ProfileScreen] --> [AuthContext]
+
+[AuthContext] --> [AuthService]
+[ExpenseService] --> [MockAPI]
+[AuthService] --> [MockAPI]
+[MockAPI] --> "JSON Storage"
+
+@enduml
+
+@startuml State Diagram - Authentication Flow
+
+[*] --> NotAuthenticated
+NotAuthenticated --> LoginScreen: App Start
+LoginScreen --> Authenticating: Submit Credentials
+Authenticating --> Authenticated: Valid Credentials
+Authenticating --> LoginScreen: Invalid Credentials
+Authenticated --> NotAuthenticated: Logout
+Authenticated --> [*]: App Close
+
+@enduml
+
+@startuml Use Case Diagram
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor User
+
+rectangle "Personal Money Manager" {
+  usecase "Login" as UC1
+  usecase "Register" as UC2
+  usecase "Add Expense" as UC3
+  usecase "View Expenses" as UC4
+  usecase "View Statistics" as UC5
+  usecase "Manage Profile" as UC6
+  usecase "Set Budget" as UC7
+  usecase "Delete Expense" as UC8
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+
+UC1 ..> UC3 : <<include>>
+UC1 ..> UC4 : <<include>>
+UC1 ..> UC5 : <<include>>
+UC1 ..> UC6 : <<include>>
+UC1 ..> UC7 : <<include>>
+
+@enduml
+
+@startuml Activity Diagram - Expense Creation
+
+start
+:User opens AddExpenseScreen;
+:Enter expense details;
+if (Form valid?) then (yes)
+  :Submit expense;
+  :Call ExpenseService;
+  :POST to /api/v1/expenses;
+  if (API success?) then (yes)
+    :Update local state;
+    :Show success message;
+    :Navigate to HomeScreen;
+  else (no)
+    :Show error message;
+  endif
+else (no)
+  :Show validation errors;
+endif
+stop
+
+@enduml 
