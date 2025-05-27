@@ -21,27 +21,30 @@ const MainNavigator = () => {
       }}
     >
       <Tab.Screen
-        name="Home"
+        name="HomeTab"
         component={HomeScreen}
         options={{
+          tabBarLabel: 'Home',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="home" color={color} size={size} />
           ),
         }}
       />
       <Tab.Screen
-        name="Statistics"
+        name="StatisticsTab"
         component={StatisticsScreen}
         options={{
+          tabBarLabel: 'Statistics',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="chart-bar" color={color} size={size} />
           ),
         }}
       />
       <Tab.Screen
-        name="Profile"
+        name="ProfileTab"
         component={ProfileScreen}
         options={{
+          tabBarLabel: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="account" color={color} size={size} />
           ),
