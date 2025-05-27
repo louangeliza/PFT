@@ -17,7 +17,11 @@ const LoginScreen = ({ navigation }) => {
     try {
       setLoading(true);
       await login(username, password);
-      navigation.replace('Main');
+      // Navigate to Main through the root navigator
+      navigation.getParent()?.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
     } catch (error) {
       Alert.alert('Error', error.message || 'Login failed');
     } finally {

@@ -34,9 +34,17 @@ const RootNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
-          <Stack.Screen name="Main" component={MainNavigator} />
+          <Stack.Screen 
+            name="Main" 
+            component={MainNavigator}
+            options={{ gestureEnabled: false }}
+          />
         ) : (
-          <Stack.Screen name="Auth" component={AuthNavigator} />
+          <Stack.Screen 
+            name="Auth" 
+            component={AuthNavigator}
+            options={{ gestureEnabled: false }}
+          />
         )}
       </Stack.Navigator>
     </NavigationContainer>
