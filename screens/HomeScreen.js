@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
-import { FAB, Card, Title, Paragraph, IconButton, Text } from 'react-native-paper';
+import { FAB, Card, Title, Paragraph, IconButton, Text, ActivityIndicator } from 'react-native-paper';
 import { getExpenses, deleteExpense } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = () => {
   const [expenses, setExpenses] = useState([]);
@@ -15,7 +16,12 @@ const HomeScreen = () => {
       const data = await getExpenses();
       setExpenses(data);
     } catch (error) {
-      Alert.alert('Error', 'Failed to load expenses');
+      if (error.message === 'User not logged in') {
+        await AsyncStorage.removeItem('user');
+        navigation.replace('Login');
+      } else {
+        Alert.alert('Error', 'Failed to load expenses');
+      }
     } finally {
       setLoading(false);
     }
@@ -31,7 +37,11 @@ const HomeScreen = () => {
       setExpenses(expenses.filter(expense => expense.id !== id));
       Alert.alert('Success', 'Expense deleted successfully');
     } catch (error) {
-      Alert.alert('Error', 'Failed to delete expense');
+      if (error.message === 'Unauthorized to delete this expense') {
+        Alert.alert('Error', 'You are not authorized to delete this expense');
+      } else {
+        Alert.alert('Error', 'Failed to delete expense');
+      }
     }
   };
 
@@ -53,17 +63,32 @@ const HomeScreen = () => {
     </Card>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Expenses</Text>
-      <FlatList
-        data={expenses}
-        renderItem={renderExpense}
-        keyExtractor={item => item.id}
-        refreshing={loading}
-        onRefresh={loadExpenses}
-        contentContainerStyle={styles.list}
-      />
+      {expenses.length === 0 ? (
+        <View style={styles.centered}>
+          <Text style={styles.noExpenses}>No expenses found</Text>
+          <Text style={styles.addExpenseHint}>Tap the + button to add an expense</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={expenses}
+          renderItem={renderExpense}
+          keyExtractor={item => item.id}
+          refreshing={loading}
+          onRefresh={loadExpenses}
+          contentContainerStyle={styles.list}
+        />
+      )}
       <FAB
         style={styles.fab}
         icon="plus"
@@ -99,6 +124,21 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noExpenses: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  addExpenseHint: {
+    color: '#666',
+    textAlign: 'center',
   },
 });
 

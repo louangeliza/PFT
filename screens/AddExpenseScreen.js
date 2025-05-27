@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { TextInput, Button, Text, HelperText } from 'react-native-paper';
 import { createExpense } from '../services/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AddExpenseScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -30,18 +31,42 @@ const AddExpenseScreen = ({ navigation }) => {
 
     try {
       setLoading(true);
+      const user = JSON.parse(await AsyncStorage.getItem('user'));
+      if (!user) {
+        throw new Error('User not logged in');
+      }
+
       const expenseData = {
         name,
         amount: parseFloat(amount).toFixed(2),
         description,
         createdAt: date.toISOString(),
+        userId: user.id
       };
 
-      await createExpense(expenseData);
-      Alert.alert('Success', 'Expense added successfully');
-      navigation.goBack();
+      console.log('Creating expense with data:', expenseData);
+      const response = await createExpense(expenseData);
+      console.log('Expense created successfully:', response);
+
+      Alert.alert(
+        'Success',
+        'Expense added successfully',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Force refresh the home screen
+              navigation.navigate('Home', { refresh: true });
+            }
+          }
+        ]
+      );
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to add expense');
+      console.error('Error creating expense:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to add expense. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
