@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/LoginScreen';
-import HomeScreen from '../screens/HomeScreen';
+import MainNavigator from './MainNavigator';
 import AddExpenseScreen from '../screens/AddExpenseScreen';
 import ExpenseDetailsScreen from '../screens/ExpenseDetailsScreen';
 
@@ -12,7 +12,6 @@ const AppNavigator = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Login"
         screenOptions={{
           headerStyle: {
             backgroundColor: '#6200ee',
@@ -23,23 +22,23 @@ const AppNavigator = () => {
           },
         }}
       >
-        <Stack.Screen
-          name="Login"
+        <Stack.Screen 
+          name="Login" 
           component={LoginScreen}
           options={{ headerShown: false }}
         />
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{ title: 'My Expenses' }}
+        <Stack.Screen 
+          name="Main" 
+          component={MainNavigator}
+          options={{ headerShown: false }}
         />
-        <Stack.Screen
-          name="AddExpense"
+        <Stack.Screen 
+          name="AddExpense" 
           component={AddExpenseScreen}
           options={{ title: 'Add Expense' }}
         />
-        <Stack.Screen
-          name="ExpenseDetails"
+        <Stack.Screen 
+          name="ExpenseDetails" 
           component={ExpenseDetailsScreen}
           options={{ title: 'Expense Details' }}
         />
