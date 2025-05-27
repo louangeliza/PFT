@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import AddExpenseScreen from '../screens/AddExpenseScreen';
+import ExpenseDetailsScreen from '../screens/ExpenseDetailsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -36,6 +37,11 @@ const AppNavigator = () => {
           name="AddExpense"
           component={AddExpenseScreen}
           options={{ title: 'Add Expense' }}
+        />
+        <Stack.Screen
+          name="ExpenseDetails"
+          component={ExpenseDetailsScreen}
+          options={{ title: 'Expense Details' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

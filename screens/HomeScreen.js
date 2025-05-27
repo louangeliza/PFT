@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, Alert, TouchableOpacity } from 'react-native';
 import { FAB, Card, Title, Paragraph, IconButton, Text, ActivityIndicator } from 'react-native-paper';
 import { getExpenses, deleteExpense } from '../services/api';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const HomeScreen = () => {
+const HomeScreen = ({ route }) => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
@@ -13,9 +13,12 @@ const HomeScreen = () => {
   const loadExpenses = async () => {
     try {
       setLoading(true);
+      console.log('Loading expenses...');
       const data = await getExpenses();
+      console.log('Expenses loaded:', data);
       setExpenses(data);
     } catch (error) {
+      console.error('Error loading expenses:', error);
       if (error.message === 'User not logged in') {
         await AsyncStorage.removeItem('user');
         navigation.replace('Login');
@@ -27,9 +30,21 @@ const HomeScreen = () => {
     }
   };
 
+  // Load expenses when the screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadExpenses();
+    }, [])
+  );
+
+  // Handle refresh parameter from navigation
   useEffect(() => {
-    loadExpenses();
-  }, []);
+    if (route.params?.refresh) {
+      loadExpenses();
+      // Clear the refresh parameter
+      navigation.setParams({ refresh: undefined });
+    }
+  }, [route.params?.refresh]);
 
   const handleDelete = async (id) => {
     try {
@@ -37,6 +52,7 @@ const HomeScreen = () => {
       setExpenses(expenses.filter(expense => expense.id !== id));
       Alert.alert('Success', 'Expense deleted successfully');
     } catch (error) {
+      console.error('Error deleting expense:', error);
       if (error.message === 'Unauthorized to delete this expense') {
         Alert.alert('Error', 'You are not authorized to delete this expense');
       } else {
@@ -46,21 +62,28 @@ const HomeScreen = () => {
   };
 
   const renderExpense = ({ item }) => (
-    <Card style={styles.card}>
-      <Card.Content>
-        <View style={styles.cardHeader}>
-          <Title>{item.name}</Title>
-          <IconButton
-            icon="delete"
-            size={20}
-            onPress={() => handleDelete(item.id)}
-          />
-        </View>
-        <Paragraph>Amount: ${parseFloat(item.amount).toFixed(2)}</Paragraph>
-        <Paragraph>Description: {item.description}</Paragraph>
-        <Paragraph>Date: {new Date(item.createdAt).toLocaleDateString()}</Paragraph>
-      </Card.Content>
-    </Card>
+    <TouchableOpacity
+      onPress={() => navigation.navigate('ExpenseDetails', { expenseId: item.id })}
+    >
+      <Card style={styles.card}>
+        <Card.Content>
+          <View style={styles.cardHeader}>
+            <Title>{item.name}</Title>
+            <IconButton
+              icon="delete"
+              size={20}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleDelete(item.id);
+              }}
+            />
+          </View>
+          <Paragraph>Amount: ${parseFloat(item.amount).toFixed(2)}</Paragraph>
+          <Paragraph>Description: {item.description}</Paragraph>
+          <Paragraph>Date: {new Date(item.createdAt).toLocaleDateString()}</Paragraph>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
   );
 
   if (loading) {
