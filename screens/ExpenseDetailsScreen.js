@@ -11,6 +11,17 @@ const ExpenseDetailsScreen = () => {
   const route = useRoute();
   const { expenseId } = route.params;
 
+  const formatAmount = (amount) => {
+    try {
+      // Handle string or number input
+      const numAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
+      return isNaN(numAmount) ? '0.00' : numAmount.toFixed(2);
+    } catch (error) {
+      console.error('Error formatting amount:', error);
+      return '0.00';
+    }
+  };
+
   useEffect(() => {
     loadExpenseDetails();
   }, [expenseId]);
@@ -78,7 +89,7 @@ const ExpenseDetailsScreen = () => {
           
           <View style={styles.detailRow}>
             <Paragraph style={styles.label}>Amount:</Paragraph>
-            <Paragraph style={styles.value}>${parseFloat(expense.amount).toFixed(2)}</Paragraph>
+            <Paragraph style={styles.value}>${formatAmount(expense.amount)}</Paragraph>
           </View>
 
           <View style={styles.detailRow}>
