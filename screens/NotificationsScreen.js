@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
 import { Text, Card, IconButton, ActivityIndicator } from 'react-native-paper';
-import { getNotifications, markNotificationAsRead, deleteNotification } from '../services/notifications';
+import { getNotifications, markNotificationAsRead } from '../services/notifications';
 
 const NotificationsScreen = () => {
   const [notifications, setNotifications] = useState([]);
@@ -24,37 +24,50 @@ const NotificationsScreen = () => {
     loadNotifications();
   }, []);
 
-  const handleCloseNotification = async (notification) => {
+  const handleMarkAsRead = async (notification) => {
     try {
-      // Mark as read and delete from storage
+      // Mark as read
       await markNotificationAsRead(notification.id);
-      await deleteNotification(notification.id);
       
       // Update local state
       setNotifications(prevNotifications => 
-        prevNotifications.filter(n => n.id !== notification.id)
+        prevNotifications.map(n => 
+          n.id === notification.id 
+            ? { ...n, read: true }
+            : n
+        )
       );
     } catch (error) {
-      console.error('Error closing notification:', error);
-      Alert.alert('Error', 'Failed to close notification');
+      console.error('Error marking notification as read:', error);
+      Alert.alert('Error', 'Failed to mark notification as read');
     }
   };
 
   const renderNotification = ({ item }) => (
-    <Card style={styles.notificationCard}>
+    <Card style={[
+      styles.notificationCard,
+      item.read && styles.readNotificationCard
+    ]}>
       <Card.Content style={styles.cardContent}>
         <View style={styles.notificationContent}>
-          <Text style={styles.notificationMessage}>{item.message}</Text>
+          <Text style={[
+            styles.notificationMessage,
+            item.read && styles.readNotificationMessage
+          ]}>
+            {item.message}
+          </Text>
           <Text style={styles.notificationTime}>
             {new Date(item.createdAt).toLocaleString()}
           </Text>
         </View>
-        <IconButton
-          icon="close"
-          size={20}
-          onPress={() => handleCloseNotification(item)}
-          style={styles.closeButton}
-        />
+        {!item.read && (
+          <IconButton
+            icon="check"
+            size={20}
+            onPress={() => handleMarkAsRead(item)}
+            style={styles.markReadButton}
+          />
+        )}
       </Card.Content>
     </Card>
   );
@@ -105,6 +118,10 @@ const styles = StyleSheet.create({
     elevation: 2,
     backgroundColor: '#fff',
   },
+  readNotificationCard: {
+    backgroundColor: '#f8f8f8',
+    elevation: 0,
+  },
   cardContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -119,11 +136,14 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
   },
+  readNotificationMessage: {
+    color: '#666',
+  },
   notificationTime: {
     fontSize: 12,
     color: '#999',
   },
-  closeButton: {
+  markReadButton: {
     margin: 0,
   },
   noNotifications: {

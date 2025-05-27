@@ -164,8 +164,13 @@ const HomeScreen = ({ route }) => {
         return isToday;
       });
       
-      console.log('Today\'s expenses:', todayExpenses);
-      setExpenses(todayExpenses);
+      // Sort today's expenses by date (newest first) and take only the 3 most recent
+      const sortedTodayExpenses = todayExpenses
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 3);
+      
+      console.log('Today\'s recent expenses:', sortedTodayExpenses);
+      setExpenses(sortedTodayExpenses);
       calculateTotals(data); // Still calculate totals from all expenses
     } catch (error) {
       console.error('Error loading expenses:', error);
