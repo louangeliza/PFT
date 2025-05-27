@@ -1,53 +1,68 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { IconButton } from 'react-native-paper';
 import HomeScreen from '../screens/HomeScreen';
 import StatisticsScreen from '../screens/StatisticsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import AllExpensesScreen from '../screens/AllExpensesScreen';
+import NotificationBell from '../components/NotificationBell';
 
 const Tab = createBottomTabNavigator();
 
-const MainNavigator = () => {
+const MainNavigator = ({ navigation }) => {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === 'Home') {
+            iconName = 'home';
+          } else if (route.name === 'AllExpenses') {
+            iconName = 'format-list-bulleted';
+          } else if (route.name === 'Statistics') {
+            iconName = 'chart-bar';
+          } else if (route.name === 'Profile') {
+            iconName = 'account';
+          }
+
+          return <IconButton icon={iconName} size={size} iconColor={color} />;
+        },
         tabBarActiveTintColor: '#6200ee',
         tabBarInactiveTintColor: 'gray',
-        tabBarStyle: {
-          paddingBottom: 5,
-          paddingTop: 5,
-        },
-        headerShown: false,
-      }}
+        headerRight: () => (
+          <NotificationBell
+            onPress={() => navigation.navigate('Notifications')}
+          />
+        ),
+      })}
     >
-      <Tab.Screen
-        name="HomeTab"
+      <Tab.Screen 
+        name="Home" 
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="home" color={color} size={size} />
-          ),
+          title: 'Recent',
         }}
       />
-      <Tab.Screen
-        name="StatisticsTab"
+      <Tab.Screen 
+        name="AllExpenses" 
+        component={AllExpensesScreen}
+        options={{
+          title: 'All Expenses',
+        }}
+      />
+      <Tab.Screen 
+        name="Statistics" 
         component={StatisticsScreen}
         options={{
-          tabBarLabel: 'Statistics',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="chart-bar" color={color} size={size} />
-          ),
+          title: 'Statistics',
         }}
       />
-      <Tab.Screen
-        name="ProfileTab"
+      <Tab.Screen 
+        name="Profile" 
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="account" color={color} size={size} />
-          ),
+          title: 'Profile',
         }}
       />
     </Tab.Navigator>

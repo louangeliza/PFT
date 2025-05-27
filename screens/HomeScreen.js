@@ -86,8 +86,20 @@ const HomeScreen = ({ route }) => {
       console.log('Loading expenses...');
       const data = await getExpenses();
       console.log('Expenses loaded:', data);
-      setExpenses(data);
-      calculateTotals(data);
+      
+      // Filter expenses for today only
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const todayExpenses = data.filter(expense => {
+        const expenseDate = new Date(expense.createdAt);
+        return expenseDate.getDate() === today.getDate() &&
+               expenseDate.getMonth() === today.getMonth() &&
+               expenseDate.getFullYear() === today.getFullYear();
+      });
+      
+      setExpenses(todayExpenses);
+      calculateTotals(data); // Still calculate totals from all expenses
     } catch (error) {
       console.error('Error loading expenses:', error);
       if (error.message === 'User not logged in') {
