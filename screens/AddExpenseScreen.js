@@ -115,7 +115,7 @@ const AddExpenseScreen = () => {
         name,
         amount: parseFloat(amount),
         description,
-        createdAt: date.toISOString(),
+        createdAt: new Date().toISOString(),
         userId: user.id
       };
 
@@ -158,7 +158,10 @@ const AddExpenseScreen = () => {
 
         // Add notification for the new expense
         await addExpenseNotification(
-          response,
+          {
+            ...response,
+            createdAt: new Date().toISOString() // Ensure valid date
+          },
           currentAmount,
           activeBudget.amount,
           activeBudget.type

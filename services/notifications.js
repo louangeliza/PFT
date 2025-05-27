@@ -57,6 +57,24 @@ export const updateNotificationSettings = async (settings) => {
   }
 };
 
+export const getNotifications = async () => {
+  try {
+    const notifications = await AsyncStorage.getItem(NOTIFICATIONS_KEY);
+    return notifications ? JSON.parse(notifications) : [];
+  } catch (error) {
+    console.error('Error getting notifications:', error);
+    return [];
+  }
+};
+
+export const saveNotifications = async (notifications) => {
+  try {
+    await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+  } catch (error) {
+    console.error('Error saving notifications:', error);
+  }
+};
+
 export const addBudgetAlert = async (currentAmount, budgetAmount, budgetType = 'monthly') => {
   try {
     // Get existing notifications
@@ -111,7 +129,7 @@ export const addBudgetAlert = async (currentAmount, budgetAmount, budgetType = '
         notifications.unshift(newNotification);
         
         // Save updated notifications
-        await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+        await saveNotifications(notifications);
         
         // Return the new notification
         return newNotification;
@@ -132,13 +150,42 @@ const getThresholdLevel = (percentage) => {
   return null;
 };
 
-export const getNotifications = async () => {
+export const addExpenseNotification = async (expense, currentAmount, budgetAmount, budgetType = 'monthly') => {
   try {
-    const notifications = await AsyncStorage.getItem(NOTIFICATIONS_KEY);
-    return notifications ? JSON.parse(notifications) : [];
+    // Get existing notifications
+    const notifications = await getNotifications();
+    
+    // Calculate budget percentage
+    const budgetPercentage = (currentAmount / budgetAmount) * 100;
+    
+    // Create message with expense details and budget status
+    const message = `💰 New expense: $${expense.amount.toFixed(2)} for ${expense.name}\n` +
+                   `📊 You've used ${budgetPercentage.toFixed(1)}% of your ${budgetType} budget`;
+
+    const newNotification = {
+      id: Date.now().toString(),
+      message,
+      type: 'expense',
+      budgetType,
+      expenseId: expense.id,
+      budgetPercentage,
+      createdAt: new Date().toISOString(),
+      read: false
+    };
+
+    // Add new notification to the beginning of the array
+    notifications.unshift(newNotification);
+    
+    // Save updated notifications
+    await saveNotifications(notifications);
+
+    // Also check if we need to add a budget alert
+    await addBudgetAlert(currentAmount, budgetAmount, budgetType);
+    
+    return newNotification;
   } catch (error) {
-    console.error('Error getting notifications:', error);
-    return [];
+    console.error('Error adding expense notification:', error);
+    return null;
   }
 };
 
@@ -150,7 +197,7 @@ export const markNotificationAsRead = async (notificationId) => {
         ? { ...notification, read: true }
         : notification
     );
-    await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(updatedNotifications));
+    await saveNotifications(updatedNotifications);
     return true;
   } catch (error) {
     console.error('Error marking notification as read:', error);
@@ -162,7 +209,7 @@ export const deleteNotification = async (notificationId) => {
   try {
     const notifications = await getNotifications();
     const updatedNotifications = notifications.filter(notification => notification.id !== notificationId);
-    await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(updatedNotifications));
+    await saveNotifications(updatedNotifications);
     return true;
   } catch (error) {
     console.error('Error deleting notification:', error);
@@ -200,47 +247,8 @@ export const storeNotifications = async (notifications) => {
 
 export const clearAllNotifications = async () => {
   try {
-    await AsyncStorage.removeItem(NOTIFICATIONS_STORAGE_KEY);
+    await AsyncStorage.removeItem(NOTIFICATIONS_KEY);
   } catch (error) {
     console.error('Error clearing notifications:', error);
-  }
-};
-
-export const addExpenseNotification = async (expense, currentAmount, budgetAmount, budgetType = 'monthly') => {
-  try {
-    // Get existing notifications
-    const notifications = await getNotifications();
-    
-    // Calculate budget percentage
-    const budgetPercentage = (currentAmount / budgetAmount) * 100;
-    
-    // Create message with expense details and budget status
-    const message = `💰 New expense: $${expense.amount.toFixed(2)} for ${expense.name}\n` +
-                   `📊 You've used ${budgetPercentage.toFixed(1)}% of your ${budgetType} budget`;
-
-    const newNotification = {
-      id: Date.now().toString(),
-      message,
-      type: 'expense',
-      budgetType,
-      expenseId: expense.id,
-      budgetPercentage,
-      createdAt: new Date().toISOString(),
-      read: false
-    };
-
-    // Add new notification to the beginning of the array
-    notifications.unshift(newNotification);
-    
-    // Save updated notifications
-    await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
-
-    // Also check if we need to add a budget alert
-    await addBudgetAlert(currentAmount, budgetAmount, budgetType);
-    
-    return newNotification;
-  } catch (error) {
-    console.error('Error adding expense notification:', error);
-    return null;
   }
 }; 
