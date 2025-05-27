@@ -19,8 +19,8 @@ const StatisticsScreen = () => {
     averageDailySpending: 0,
     topCategory: { name: '', amount: 0 }
   });
-  const screenWidth = Dimensions.get('window').width - 32;
-  const chartHeight = 200;
+  const screenWidth = Dimensions.get('window').width - 24;
+  const chartHeight = 180;
 
   const formatAmount = (amount) => {
     try {
@@ -179,24 +179,28 @@ const StatisticsScreen = () => {
     backgroundGradientFrom: '#ffffff',
     backgroundGradientTo: '#ffffff',
     color: (opacity = 1) => `rgba(81, 45, 168, ${opacity})`,
-    strokeWidth: 2,
-    barPercentage: 0.5,
+    strokeWidth: 1,
+    barPercentage: 0.6,
     useShadowColorFromDataset: false,
     decimalPlaces: 0,
     formatYLabel: (value) => `$${value}`,
     propsForLabels: {
-      fontSize: 10,
+      fontSize: 9,
     },
     propsForBackgroundLines: {
-      strokeWidth: 1,
+      strokeWidth: 0.5,
       stroke: '#e0e0e0',
+    },
+    propsForDots: {
+      r: '3',
+      strokeWidth: '1',
     },
   };
 
   return (
     <ScrollView style={styles.container}>
       <Card style={styles.card}>
-        <Card.Content>
+        <Card.Content style={styles.cardContent}>
           <Text style={styles.title}>Daily Spending</Text>
           <BarChart
             data={chartData.daily}
@@ -209,12 +213,13 @@ const StatisticsScreen = () => {
             style={styles.chart}
             yAxisLabel="$"
             yAxisSuffix=""
+            withInnerLines={false}
           />
         </Card.Content>
       </Card>
 
       <Card style={styles.card}>
-        <Card.Content>
+        <Card.Content style={styles.cardContent}>
           <Text style={styles.title}>Monthly Spending Trend</Text>
           <LineChart
             data={chartData.monthly}
@@ -225,12 +230,13 @@ const StatisticsScreen = () => {
             style={styles.chart}
             yAxisLabel="$"
             yAxisSuffix=""
+            withInnerLines={false}
           />
         </Card.Content>
       </Card>
 
       <Card style={styles.card}>
-        <Card.Content>
+        <Card.Content style={styles.cardContent}>
           <Text style={styles.title}>Spending by Category</Text>
           <PieChart
             data={chartData.categories.data.map((value, index) => ({
@@ -238,7 +244,7 @@ const StatisticsScreen = () => {
               name: chartData.categories.labels[index],
               color: `rgba(81, 45, 168, ${0.8 - (index * 0.1)})`,
               legendFontColor: '#7F7F7F',
-              legendFontSize: 10
+              legendFontSize: 9
             }))}
             width={screenWidth}
             height={chartHeight}
@@ -253,7 +259,7 @@ const StatisticsScreen = () => {
       </Card>
 
       <Card style={styles.card}>
-        <Card.Content>
+        <Card.Content style={styles.cardContent}>
           <Text style={styles.title}>Insights</Text>
           <View style={styles.insightItem}>
             <Text style={styles.insightLabel}>Highest Spending Day:</Text>
@@ -283,36 +289,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    padding: 16,
+    padding: 12,
   },
   card: {
-    marginBottom: 16,
+    marginBottom: 12,
     elevation: 2,
   },
+  cardContent: {
+    padding: 8,
+  },
   title: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   chart: {
-    marginVertical: 4,
+    marginVertical: 2,
     borderRadius: 8,
   },
   insightItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   insightLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
     flex: 1,
   },
   insightValue: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
     textAlign: 'right',
     flex: 1,
