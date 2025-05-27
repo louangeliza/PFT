@@ -57,33 +57,47 @@ const AddExpenseScreen = ({ navigation }) => {
         throw new Error('User not logged in');
       }
 
-      // Check budget before adding expense
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      const monthlyExpenses = expenses.filter(expense => {
-        const expenseDate = new Date(expense.createdAt);
-        return expenseDate.getMonth() === currentMonth && 
-               expenseDate.getFullYear() === currentYear;
-      });
-      
-      const monthlyTotal = monthlyExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-      const newExpenseAmount = parseFloat(amount);
-      const totalWithNewExpense = monthlyTotal + newExpenseAmount;
-      const budgetProgress = (totalWithNewExpense / monthlyBudget) * 100;
+      // Get the month and year of the expense
+      const expenseMonth = date.getMonth();
+      const expenseYear = date.getFullYear();
+      const monthKey = `${expenseYear}-${String(expenseMonth + 1).padStart(2, '0')}`;
 
-      if (budgetProgress > 100) {
-        Alert.alert(
-          'Budget Exceeded',
-          'Adding this expense would exceed your monthly budget. Cannot add more expenses this month.',
-          [{ text: 'OK' }]
-        );
-        setLoading(false);
-        return;
+      // Load saved budgets
+      const savedBudgets = await AsyncStorage.getItem('monthlyBudgets');
+      const budgets = savedBudgets ? JSON.parse(savedBudgets) : [];
+      
+      // Find the budget for this month
+      const monthBudget = budgets.find(b => b.month === monthKey);
+      
+      if (monthBudget) {
+        // Check budget for this specific month
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const monthlyExpenses = expenses.filter(expense => {
+          const expenseDate = new Date(expense.createdAt);
+          return expenseDate.getMonth() === expenseMonth && 
+                 expenseDate.getFullYear() === expenseYear;
+        });
+        
+        const monthlyTotal = monthlyExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+        const newExpenseAmount = parseFloat(amount);
+        const totalWithNewExpense = monthlyTotal + newExpenseAmount;
+        const budgetProgress = (totalWithNewExpense / monthBudget.amount) * 100;
+
+        if (budgetProgress > 100) {
+          Alert.alert(
+            'Budget Exceeded',
+            `Adding this expense would exceed your budget for ${date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}. Cannot add more expenses this month.`,
+            [{ text: 'OK' }]
+          );
+          setLoading(false);
+          return;
+        }
       }
 
       const expenseData = {
         name,
-        amount: newExpenseAmount,
+        amount: parseFloat(amount),
         description,
         createdAt: date.toISOString(),
         userId: user.id

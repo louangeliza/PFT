@@ -44,77 +44,93 @@ const StatisticsScreen = () => {
     }
   };
 
-  const processChartData = (expenseData) => {
-    // Process monthly data
-    const monthlyExpenses = {};
-    const dailyExpenses = {};
-    const categoryExpenses = {};
+  const processChartData = async (expenseData) => {
+    try {
+      // Load saved budgets
+      const savedBudgets = await AsyncStorage.getItem('monthlyBudgets');
+      const budgets = savedBudgets ? JSON.parse(savedBudgets) : [];
 
-    expenseData.forEach(expense => {
-      try {
-        const date = new Date(expense.createdAt);
-        if (isNaN(date.getTime())) {
-          console.error('Invalid date:', expense.createdAt);
-          return;
-        }
+      // Process monthly data
+      const monthlyExpenses = {};
+      const dailyExpenses = {};
+      const categoryExpenses = {};
 
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-        const category = expense.category || expense.name || 'Uncategorized';
-
-        // Monthly data
-        monthlyExpenses[monthKey] = (monthlyExpenses[monthKey] || 0) + Number(expense.amount);
-        
-        // Daily data
-        dailyExpenses[dayKey] = (dailyExpenses[dayKey] || 0) + Number(expense.amount);
-        
-        // Category data
-        categoryExpenses[category] = (categoryExpenses[category] || 0) + Number(expense.amount);
-      } catch (error) {
-        console.error('Error processing expense:', error, expense);
-      }
-    });
-
-    // Convert to arrays for charts
-    const monthlyChartData = Object.entries(monthlyExpenses)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, amount]) => {
-        const [year, monthNum] = month.split('-');
-        const date = new Date(year, parseInt(monthNum) - 1);
-        return {
-          month: date.toLocaleDateString('en-US', { month: 'short' }),
-          amount: amount
-        };
+      // Initialize months with budgets
+      budgets.forEach(budget => {
+        monthlyExpenses[budget.month] = 0;
       });
 
-    // Get last 7 days of data
-    const today = new Date();
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
-    }).reverse();
+      // Add expenses to their respective months
+      expenseData.forEach(expense => {
+        try {
+          const date = new Date(expense.createdAt);
+          if (isNaN(date.getTime())) {
+            console.error('Invalid date:', expense.createdAt);
+            return;
+          }
 
-    const dailyChartData = last7Days.map(dayKey => ({
-      day: new Date(dayKey).toLocaleDateString('en-US', { weekday: 'short' }),
-      amount: dailyExpenses[dayKey] || 0
-    }));
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+          const category = expense.category || expense.name || 'Uncategorized';
 
-    // Process category data
-    const categoryChartData = Object.entries(categoryExpenses)
-      .filter(([_, amount]) => amount > 0) // Only include categories with expenses
-      .sort(([_, a], [__, b]) => b - a) // Sort by amount descending
-      .map(([category, amount], index) => ({
-        name: category,
-        amount: amount,
-        color: getRandomColor(index),
-        legendFontColor: '#7F7F7F',
-        legendFontSize: 12
+          // Monthly data
+          monthlyExpenses[monthKey] = (monthlyExpenses[monthKey] || 0) + Number(expense.amount);
+          
+          // Daily data
+          dailyExpenses[dayKey] = (dailyExpenses[dayKey] || 0) + Number(expense.amount);
+          
+          // Category data
+          categoryExpenses[category] = (categoryExpenses[category] || 0) + Number(expense.amount);
+        } catch (error) {
+          console.error('Error processing expense:', error, expense);
+        }
+      });
+
+      // Convert to arrays for charts
+      const monthlyChartData = Object.entries(monthlyExpenses)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, amount]) => {
+          const [year, monthNum] = month.split('-');
+          const date = new Date(year, parseInt(monthNum) - 1);
+          const budget = budgets.find(b => b.month === month);
+          return {
+            month: date.toLocaleDateString('en-US', { month: 'short' }),
+            amount: amount,
+            budget: budget ? budget.amount : null
+          };
+        });
+
+      // Get last 7 days of data
+      const today = new Date();
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        return date.toISOString().split('T')[0];
+      }).reverse();
+
+      const dailyChartData = last7Days.map(dayKey => ({
+        day: new Date(dayKey).toLocaleDateString('en-US', { weekday: 'short' }),
+        amount: dailyExpenses[dayKey] || 0
       }));
 
-    setMonthlyData(monthlyChartData);
-    setDailyData(dailyChartData);
-    setCategoryData(categoryChartData);
+      // Process category data
+      const categoryChartData = Object.entries(categoryExpenses)
+        .filter(([_, amount]) => amount > 0) // Only include categories with expenses
+        .sort(([_, a], [__, b]) => b - a) // Sort by amount descending
+        .map(([category, amount], index) => ({
+          name: category,
+          amount: amount,
+          color: getRandomColor(index),
+          legendFontColor: '#7F7F7F',
+          legendFontSize: 12
+        }));
+
+      setMonthlyData(monthlyChartData);
+      setDailyData(dailyChartData);
+      setCategoryData(categoryChartData);
+    } catch (error) {
+      console.error('Error processing chart data:', error);
+    }
   };
 
   const getRandomColor = (index) => {
@@ -190,14 +206,30 @@ const StatisticsScreen = () => {
               data={{
                 labels: monthlyData.map(m => m.month),
                 datasets: [{
-                  data: monthlyData.map(m => m.amount)
+                  data: monthlyData.map(m => m.amount),
+                  color: (opacity = 1) => `rgba(98, 0, 238, ${opacity})`,
+                },
+                {
+                  data: monthlyData.map(m => m.budget),
+                  color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
                 }]
               }}
               width={screenWidth - 32}
               height={220}
-              chartConfig={chartConfig}
+              chartConfig={{
+                ...chartConfig,
+                formatYLabel: (value) => `$${value}`,
+              }}
               style={styles.chart}
               bezier
+              withDots={true}
+              withInnerLines={true}
+              withOuterLines={true}
+              withVerticalLines={false}
+              withHorizontalLines={true}
+              withVerticalLabels={true}
+              withHorizontalLabels={true}
+              fromZero
             />
           ) : (
             <Text style={styles.noDataText}>No monthly data available</Text>
@@ -248,6 +280,13 @@ const StatisticsScreen = () => {
             </Text>
           ) : (
             <Text style={styles.noDataText}>No category data available</Text>
+          )}
+          {monthlyData.length > 0 && (
+            <Text style={styles.insightText}>
+              Monthly budget adherence: {monthlyData.map(m => 
+                m.budget ? `${m.month}: ${((m.amount / m.budget) * 100).toFixed(1)}%` : null
+              ).filter(Boolean).join(', ')}
+            </Text>
           )}
         </Card.Content>
       </Card>
