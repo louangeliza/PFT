@@ -22,21 +22,41 @@ export const register = async (username, password) => {
 
 export const login = async (username, password) => {
   try {
+    console.log('Attempting login with:', { username, password });
+    
     const response = await axios.get(`${API_URL}/users`);
+    console.log('API Response:', response.data);
+    
     const users = response.data;
+    console.log('Total users found:', users.length);
     
     const user = users.find(
       u => u.username === username && u.password === password
     );
+    
+    console.log('Found user:', user ? 'Yes' : 'No');
+    if (user) {
+      console.log('User details:', {
+        id: user.id,
+        username: user.username,
+        // Don't log the password for security
+      });
+    }
 
     if (!user) {
+      console.log('Login failed: Invalid credentials');
       throw new Error('Invalid credentials');
     }
 
     await AsyncStorage.setItem('user', JSON.stringify(user));
+    console.log('Login successful, user stored in AsyncStorage');
     return user;
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
     throw error;
   }
 };

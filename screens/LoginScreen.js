@@ -9,20 +9,27 @@ const LoginScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    console.log('Login attempt with:', { username, password });
+    
     if (!username || !password) {
+      console.log('Login validation failed: Empty fields');
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     try {
       setLoading(true);
+      console.log('Calling login service...');
       await login(username, password);
+      console.log('Login successful, navigating to Main...');
+      
       // Navigate to Main through the root navigator
       navigation.getParent()?.reset({
         index: 0,
         routes: [{ name: 'Main' }],
       });
     } catch (error) {
+      console.error('Login screen error:', error);
       Alert.alert('Error', error.message || 'Login failed');
     } finally {
       setLoading(false);
@@ -33,17 +40,22 @@ const LoginScreen = ({ navigation }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Welcome Back</Text>
       <TextInput
-        label="Email"
+        label="Username"
         value={username}
-        onChangeText={setUsername}
+        onChangeText={(text) => {
+          console.log('Username changed:', text);
+          setUsername(text);
+        }}
         style={styles.input}
         autoCapitalize="none"
-        keyboardType="email-address"
       />
       <TextInput
         label="Password"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(text) => {
+          console.log('Password changed:', text.length, 'characters');
+          setPassword(text);
+        }}
         secureTextEntry
         style={styles.input}
       />
