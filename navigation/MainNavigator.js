@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { IconButton } from 'react-native-paper';
+import { IconButton, Text } from 'react-native-paper';
 import HomeScreen from '../screens/HomeScreen';
 import StatisticsScreen from '../screens/StatisticsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -42,6 +42,7 @@ const MainNavigator = ({ navigation }) => {
         component={HomeScreen}
         options={{
           title: 'Home',
+          tabBarLabel: 'Home'
         }}
       />
       <Tab.Screen 
@@ -49,6 +50,7 @@ const MainNavigator = ({ navigation }) => {
         component={AllExpensesScreen}
         options={{
           title: 'All Expenses',
+          tabBarLabel: 'All Expenses'
         }}
       />
       <Tab.Screen 
@@ -56,6 +58,7 @@ const MainNavigator = ({ navigation }) => {
         component={StatisticsScreen}
         options={{
           title: 'Statistics',
+          tabBarLabel: 'Statistics'
         }}
       />
       <Tab.Screen 
@@ -63,6 +66,7 @@ const MainNavigator = ({ navigation }) => {
         component={ProfileScreen}
         options={{
           title: 'Profile',
+          tabBarLabel: 'Profile'
         }}
       />
     </Tab.Navigator>

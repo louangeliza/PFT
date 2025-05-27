@@ -141,7 +141,7 @@ const HomeScreen = ({ route }) => {
         />
       ),
     });
-  }, [navigation]);
+  }, [navigation, user]);
 
   const handleDelete = async (id) => {
     Alert.alert(
@@ -221,12 +221,6 @@ const HomeScreen = ({ route }) => {
   return (
     <View style={styles.container}>
       <ScrollView>
-        <View style={styles.welcomeContainer}>
-          <Text style={styles.welcomeText}>
-            Welcome, {getDisplayName(user?.username)}
-          </Text>
-        </View>
-
         <View style={styles.statsContainer}>
           <Card style={styles.statsCard}>
             <Card.Content>
@@ -291,15 +285,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-  },
-  welcomeContainer: {
-    padding: 20,
-    backgroundColor: '#6200ee',
-  },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
   },
   statsContainer: {
     padding: 16,
