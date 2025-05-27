@@ -19,7 +19,8 @@ const StatisticsScreen = () => {
     averageDailySpending: 0,
     topCategory: { name: '', amount: 0 }
   });
-  const screenWidth = Dimensions.get('window').width;
+  const screenWidth = Dimensions.get('window').width - 32;
+  const chartHeight = 200;
 
   const formatAmount = (amount) => {
     try {
@@ -181,6 +182,15 @@ const StatisticsScreen = () => {
     strokeWidth: 2,
     barPercentage: 0.5,
     useShadowColorFromDataset: false,
+    decimalPlaces: 0,
+    formatYLabel: (value) => `$${value}`,
+    propsForLabels: {
+      fontSize: 10,
+    },
+    propsForBackgroundLines: {
+      strokeWidth: 1,
+      stroke: '#e0e0e0',
+    },
   };
 
   return (
@@ -191,11 +201,14 @@ const StatisticsScreen = () => {
           <BarChart
             data={chartData.daily}
             width={screenWidth}
-            height={220}
+            height={chartHeight}
             chartConfig={chartConfig}
             verticalLabelRotation={30}
             showValuesOnTopOfBars
             fromZero
+            style={styles.chart}
+            yAxisLabel="$"
+            yAxisSuffix=""
           />
         </Card.Content>
       </Card>
@@ -206,10 +219,12 @@ const StatisticsScreen = () => {
           <LineChart
             data={chartData.monthly}
             width={screenWidth}
-            height={220}
+            height={chartHeight}
             chartConfig={chartConfig}
             bezier
             style={styles.chart}
+            yAxisLabel="$"
+            yAxisSuffix=""
           />
         </Card.Content>
       </Card>
@@ -223,15 +238,16 @@ const StatisticsScreen = () => {
               name: chartData.categories.labels[index],
               color: `rgba(81, 45, 168, ${0.8 - (index * 0.1)})`,
               legendFontColor: '#7F7F7F',
-              legendFontSize: 12
+              legendFontSize: 10
             }))}
             width={screenWidth}
-            height={220}
+            height={chartHeight}
             chartConfig={chartConfig}
             accessor="value"
             backgroundColor="transparent"
-            paddingLeft="15"
+            paddingLeft="0"
             absolute
+            style={styles.chart}
           />
         </Card.Content>
       </Card>
@@ -271,15 +287,16 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 16,
+    elevation: 2,
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   chart: {
-    marginVertical: 8,
-    borderRadius: 16,
+    marginVertical: 4,
+    borderRadius: 8,
   },
   insightItem: {
     flexDirection: 'row',
@@ -290,12 +307,15 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
   },
   insightLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#666',
+    flex: 1,
   },
   insightValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
+    textAlign: 'right',
+    flex: 1,
   },
   centered: {
     flex: 1,
