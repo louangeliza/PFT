@@ -221,7 +221,7 @@ const HomeScreen = ({ route }) => {
   return (
     <View style={styles.container}>
       <ScrollView>
-        <View style={styles.header}>
+        <View style={styles.welcomeContainer}>
           <Text style={styles.welcomeText}>
             Welcome, {getDisplayName(user?.username)}
           </Text>
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  header: {
+  welcomeContainer: {
     padding: 20,
     backgroundColor: '#6200ee',
   },

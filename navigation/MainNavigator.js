@@ -41,7 +41,7 @@ const MainNavigator = ({ navigation }) => {
         name="Home" 
         component={HomeScreen}
         options={{
-          title: 'Recent',
+          title: 'Home',
         }}
       />
       <Tab.Screen 
