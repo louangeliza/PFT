@@ -3,11 +3,13 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { loginUser } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -19,7 +21,7 @@ const LoginScreen = ({ navigation }) => {
       setLoading(true);
       const user = await loginUser(username, password);
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      navigation.replace('Home');
+      navigation.replace('Main');
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to login');
     } finally {
@@ -29,30 +31,39 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Finance Tracker</Text>
-      <TextInput
-        label="Username"
-        value={username}
-        onChangeText={setUsername}
-        style={styles.input}
-        mode="outlined"
-      />
-      <TextInput
-        label="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-        mode="outlined"
-      />
-      <Button
-        mode="contained"
-        onPress={handleLogin}
-        loading={loading}
-        style={styles.button}
-      >
-        Login
-      </Button>
+      <View style={styles.header}>
+        <Text style={styles.title}>Finance Tracker</Text>
+        <Text style={styles.subtitle}>Track your expenses easily</Text>
+      </View>
+
+      <View style={styles.form}>
+        <TextInput
+          label="Email"
+          value={username}
+          onChangeText={setUsername}
+          mode="outlined"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          style={styles.input}
+        />
+        <TextInput
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          mode="outlined"
+          secureTextEntry
+          style={styles.input}
+        />
+        <Button
+          mode="contained"
+          onPress={handleLogin}
+          loading={loading}
+          disabled={loading}
+          style={styles.button}
+        >
+          Login
+        </Button>
+      </View>
     </View>
   );
 };
@@ -60,20 +71,33 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
     padding: 20,
-    justifyContent: 'center',
+    backgroundColor: '#6200ee',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 30,
+    color: '#fff',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#fff',
+    opacity: 0.8,
+  },
+  form: {
+    padding: 20,
+    marginTop: 20,
   },
   input: {
-    marginBottom: 15,
+    marginBottom: 16,
   },
   button: {
-    marginTop: 10,
+    marginTop: 8,
   },
 });
 
