@@ -1,52 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { Text, Card, Title } from 'react-native-paper';
+import { Text, Card, Title, ActivityIndicator } from 'react-native-paper';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import { getExpenses } from '../services/api';
+import { useFocusEffect } from '@react-navigation/native';
 
 const StatisticsScreen = () => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [monthlyData, setMonthlyData] = useState([]);
+  const [monthlyData, setMonthlyData] = useState({ labels: [], datasets: [{ data: [] }] });
   const [categoryData, setCategoryData] = useState([]);
-  const [dailyData, setDailyData] = useState([]);
+  const [dailyData, setDailyData] = useState({ labels: [], datasets: [{ data: [] }] });
 
   const screenWidth = Dimensions.get('window').width;
 
-  useEffect(() => {
-    loadExpenses();
-  }, []);
-
   const loadExpenses = async () => {
     try {
+      setLoading(true);
+      console.log('Loading expenses for statistics...');
       const data = await getExpenses();
+      console.log('Expenses loaded for statistics:', data);
       setExpenses(data);
       processData(data);
     } catch (error) {
-      console.error('Error loading expenses:', error);
+      console.error('Error loading expenses for statistics:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      loadExpenses();
+    }, [])
+  );
+
   const processData = (data) => {
+    if (!data || data.length === 0) {
+      console.log('No data to process for statistics');
+      return;
+    }
+
     // Process monthly data
     const monthlyTotals = {};
     data.forEach(expense => {
       const date = new Date(expense.createdAt);
-      const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       monthlyTotals[monthKey] = (monthlyTotals[monthKey] || 0) + Number(expense.amount);
     });
 
+    // Sort months chronologically
+    const sortedMonths = Object.keys(monthlyTotals).sort();
     const monthlyChartData = {
-      labels: Object.keys(monthlyTotals).map(key => {
+      labels: sortedMonths.map(key => {
         const [year, month] = key.split('-');
         return `${month}/${year.slice(2)}`;
       }),
       datasets: [{
-        data: Object.values(monthlyTotals)
+        data: sortedMonths.map(key => monthlyTotals[key])
       }]
     };
+    console.log('Processed monthly data:', monthlyChartData);
     setMonthlyData(monthlyChartData);
 
     // Process category data
@@ -63,6 +77,7 @@ const StatisticsScreen = () => {
       legendFontColor: '#7F7F7F',
       legendFontSize: 12
     }));
+    console.log('Processed category data:', categoryChartData);
     setCategoryData(categoryChartData);
 
     // Process daily data (last 30 days)
@@ -78,15 +93,18 @@ const StatisticsScreen = () => {
       }
     });
 
+    // Sort days chronologically
+    const sortedDays = Object.keys(dailyTotals).sort();
     const dailyChartData = {
-      labels: Object.keys(dailyTotals).map(key => {
+      labels: sortedDays.map(key => {
         const date = new Date(key);
         return `${date.getMonth() + 1}/${date.getDate()}`;
       }),
       datasets: [{
-        data: Object.values(dailyTotals)
+        data: sortedDays.map(key => dailyTotals[key])
       }]
     };
+    console.log('Processed daily data:', dailyChartData);
     setDailyData(dailyChartData);
   };
 
@@ -107,6 +125,14 @@ const StatisticsScreen = () => {
     useShadowColorFromDataset: false,
     decimalPlaces: 0,
   };
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -178,6 +204,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
     padding: 16,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   card: {
     marginBottom: 16,
