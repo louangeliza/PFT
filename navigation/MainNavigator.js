@@ -51,7 +51,12 @@ const MainNavigator = ({ navigation }) => {
         component={HomeScreen}
         options={{
           title: 'Home',
-          tabBarLabel: 'Home'
+          tabBarLabel: 'Home',
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: '#fff',
+          },
+          headerTintColor: '#00BCD4',
         }}
       />
       <Tab.Screen 

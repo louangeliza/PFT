@@ -140,6 +140,15 @@ const HomeScreen = ({ route }) => {
 
   useEffect(() => {
     navigation.setOptions({
+      headerTitle: () => (
+        <Text style={{ color: '#00BCD4', fontSize: 20, fontWeight: 'bold' }}>
+          Welcome, {user ? getDisplayName(user.email) : 'User'}
+        </Text>
+      ),
+      headerStyle: {
+        backgroundColor: '#fff',
+      },
+      headerTintColor: '#00BCD4',
       headerRight: () => (
         <NotificationBell
           onPress={() => navigation.navigate('Notifications')}
@@ -246,12 +255,6 @@ const HomeScreen = ({ route }) => {
   return (
     <View style={styles.container}>
       <ScrollView>
-        <View style={styles.welcomeContainer}>
-          <Text style={styles.welcomeText}>
-            Welcome, {user ? getDisplayName(user.email) : 'User'}
-          </Text>
-        </View>
-
         <View style={styles.statsContainer}>
           <Card style={styles.statsCard}>
             <Card.Content>
@@ -317,16 +320,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-  },
-  welcomeContainer: {
-    backgroundColor: '#00BCD4',
-    padding: 16,
-    marginBottom: 16,
-  },
-  welcomeText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
   },
   centered: {
     flex: 1,
