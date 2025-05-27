@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
-import { login } from '../services/api';
+import { login } from '../services/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = ({ navigation, route }) => {
@@ -30,7 +30,8 @@ const LoginScreen = ({ navigation, route }) => {
         console.log('Calling onLogin callback');
         route.params.onLogin(user);
       } else {
-        console.log('No onLogin callback found, navigating directly');
+        console.log('No onLogin callback found, navigating through parent');
+        // Use the parent navigator to reset the navigation state
         navigation.reset({
           index: 0,
           routes: [{ name: 'Main' }],
