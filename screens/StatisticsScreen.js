@@ -152,7 +152,7 @@ const StatisticsScreen = () => {
         <Card.Content>
           <Text style={styles.chartTitle}>Daily Spending (Last 7 Days)</Text>
           {dailyData.length > 0 ? (
-            <BarChart
+            <LineChart
               data={{
                 labels: dailyData.map(d => d.day),
                 datasets: [{
@@ -161,9 +161,19 @@ const StatisticsScreen = () => {
               }}
               width={screenWidth - 32}
               height={220}
-              chartConfig={chartConfig}
+              chartConfig={{
+                ...chartConfig,
+                formatYLabel: (value) => `$${value}`,
+              }}
               style={styles.chart}
-              showValuesOnTopOfBars
+              bezier
+              withDots={true}
+              withInnerLines={true}
+              withOuterLines={true}
+              withVerticalLines={false}
+              withHorizontalLines={true}
+              withVerticalLabels={true}
+              withHorizontalLabels={true}
               fromZero
             />
           ) : (

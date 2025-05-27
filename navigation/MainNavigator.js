@@ -6,6 +6,7 @@ import StatisticsScreen from '../screens/StatisticsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AllExpensesScreen from '../screens/AllExpensesScreen';
 import NotificationBell from '../components/NotificationBell';
+import BudgetsScreen from '../screens/BudgetsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -16,14 +17,22 @@ const MainNavigator = ({ navigation }) => {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
-          if (route.name === 'Home') {
-            iconName = 'home';
-          } else if (route.name === 'AllExpenses') {
-            iconName = 'format-list-bulleted';
-          } else if (route.name === 'Statistics') {
-            iconName = 'chart-bar';
-          } else if (route.name === 'Profile') {
-            iconName = 'account';
+          switch (route.name) {
+            case 'Home':
+              iconName = 'home';
+              break;
+            case 'All Expenses':
+              iconName = 'format-list-bulleted';
+              break;
+            case 'Statistics':
+              iconName = 'chart-bar';
+              break;
+            case 'Budgets':
+              iconName = 'wallet';
+              break;
+            case 'Profile':
+              iconName = 'account';
+              break;
           }
 
           return <IconButton icon={iconName} size={size} iconColor={color} />;
@@ -46,7 +55,7 @@ const MainNavigator = ({ navigation }) => {
         }}
       />
       <Tab.Screen 
-        name="AllExpenses" 
+        name="All Expenses" 
         component={AllExpensesScreen}
         options={{
           title: 'All Expenses',
@@ -59,6 +68,14 @@ const MainNavigator = ({ navigation }) => {
         options={{
           title: 'Statistics',
           tabBarLabel: 'Statistics'
+        }}
+      />
+      <Tab.Screen 
+        name="Budgets" 
+        component={BudgetsScreen}
+        options={{
+          title: 'Budgets',
+          tabBarLabel: 'Budgets'
         }}
       />
       <Tab.Screen 
