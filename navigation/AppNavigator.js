@@ -17,7 +17,7 @@ const AppNavigator = () => {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#6200ee" />
+        <ActivityIndicator size="large" color="#2196F3" />
       </View>
     );
   }
@@ -27,7 +27,7 @@ const AppNavigator = () => {
       <Stack.Navigator
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#6200ee',
+            backgroundColor: '#2196F3',
           },
           headerTintColor: '#fff',
           headerTitleStyle: {
