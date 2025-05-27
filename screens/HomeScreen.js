@@ -246,6 +246,12 @@ const HomeScreen = ({ route }) => {
   return (
     <View style={styles.container}>
       <ScrollView>
+        <View style={styles.welcomeContainer}>
+          <Text style={styles.welcomeText}>
+            Welcome, {user ? getDisplayName(user.email) : 'User'}
+          </Text>
+        </View>
+
         <View style={styles.statsContainer}>
           <Card style={styles.statsCard}>
             <Card.Content>
@@ -301,6 +307,7 @@ const HomeScreen = ({ route }) => {
         style={styles.fab}
         icon="plus"
         onPress={() => navigation.navigate('AddExpense')}
+        color="#fff"
       />
     </View>
   );
@@ -310,6 +317,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  welcomeContainer: {
+    backgroundColor: '#00BCD4',
+    padding: 16,
+    marginBottom: 16,
+  },
+  welcomeText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   centered: {
     flex: 1,
@@ -406,7 +423,7 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
-    backgroundColor: '#666',
+    backgroundColor: '#00BCD4',
   },
 });
 

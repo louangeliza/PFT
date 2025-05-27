@@ -37,7 +37,7 @@ const MainNavigator = ({ navigation }) => {
 
           return <IconButton icon={iconName} size={size} iconColor={color} />;
         },
-        tabBarActiveTintColor: '#6200ee',
+        tabBarActiveTintColor: '#00BCD4',
         tabBarInactiveTintColor: 'gray',
         headerRight: () => (
           <NotificationBell
