@@ -29,8 +29,8 @@ const HomeScreen = ({ route }) => {
 
   const getDisplayName = (email) => {
     if (!email) return 'User';
-    // Get the part before @ and any special characters
-    const username = email.split('@')[0].split(/[._-]/)[0];
+    // Get the part before @ and stop at first number or special character
+    const username = email.split('@')[0].split(/[0-9._-]/)[0];
     return username.charAt(0).toUpperCase() + username.slice(1);
   };
 
@@ -77,8 +77,17 @@ const HomeScreen = ({ route }) => {
   const loadUserData = async () => {
     try {
       const userData = await AsyncStorage.getItem('user');
+      console.log('Loaded user data:', userData);
       if (userData) {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        console.log('Parsed user data:', parsedUser);
+        if (parsedUser && parsedUser.email) {
+          setUser(parsedUser);
+        } else {
+          console.log('No email found in user data');
+        }
+      } else {
+        console.log('No user data found in AsyncStorage');
       }
       const activeBudgetData = await AsyncStorage.getItem('activeBudget');
       if (activeBudgetData) {
