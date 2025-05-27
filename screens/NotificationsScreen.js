@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Card, Title, Paragraph, Text, ActivityIndicator } from 'react-native-paper';
-import { getStoredNotifications } from '../services/notifications';
+import { Card, Title, Paragraph, Text, ActivityIndicator, IconButton } from 'react-native-paper';
+import { getStoredNotifications, markNotificationAsRead } from '../services/notifications';
 
 const NotificationsScreen = () => {
   const [notifications, setNotifications] = useState([]);
@@ -36,6 +36,18 @@ const NotificationsScreen = () => {
     });
   };
 
+  const handleCloseNotification = async (notificationId) => {
+    try {
+      await markNotificationAsRead(notificationId);
+      // Remove the notification from the local state
+      setNotifications(prevNotifications => 
+        prevNotifications.filter(notification => notification.id !== notificationId)
+      );
+    } catch (error) {
+      console.error('Error closing notification:', error);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -66,7 +78,15 @@ const NotificationsScreen = () => {
             <Card.Content>
               <View style={styles.alertHeader}>
                 <Title style={styles.alertTitle}>{notification.title}</Title>
-                <Text style={styles.alertTime}>{formatDate(notification.timestamp)}</Text>
+                <View style={styles.headerRight}>
+                  <Text style={styles.alertTime}>{formatDate(notification.timestamp)}</Text>
+                  <IconButton
+                    icon="close"
+                    size={20}
+                    onPress={() => handleCloseNotification(notification.id)}
+                    style={styles.closeButton}
+                  />
+                </View>
               </View>
               <Paragraph style={styles.alertMessage}>{notification.message}</Paragraph>
               <View style={styles.budgetDetails}>
@@ -173,6 +193,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
+  },
+  headerRight: {
+    alignItems: 'flex-end',
+  },
+  closeButton: {
+    margin: 0,
+    marginLeft: 8,
   },
 });
 
