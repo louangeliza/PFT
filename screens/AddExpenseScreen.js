@@ -115,7 +115,7 @@ const AddExpenseScreen = () => {
         name,
         amount: parseFloat(amount),
         description,
-        createdAt: new Date().toISOString(),
+        createdAt: date.toISOString(),
         userId: user.id
       };
 
