@@ -33,7 +33,26 @@ const BudgetsScreen = () => {
   const handleDateChange = (event, date) => {
     setShowDatePicker(false);
     if (date) {
-      setSelectedMonth(date);
+      // Get current date and set it to the first day of the month
+      const currentDate = new Date();
+      currentDate.setDate(1);
+      currentDate.setHours(0, 0, 0, 0);
+
+      // Set the selected date to the first day of the month
+      const selectedDate = new Date(date);
+      selectedDate.setDate(1);
+      selectedDate.setHours(0, 0, 0, 0);
+
+      // Only allow current and future months
+      if (selectedDate >= currentDate) {
+        setSelectedMonth(date);
+      } else {
+        Alert.alert(
+          'Invalid Date',
+          'You can only set budgets for the current month and future months.',
+          [{ text: 'OK' }]
+        );
+      }
     }
   };
 
@@ -45,6 +64,25 @@ const BudgetsScreen = () => {
 
     try {
       const monthKey = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, '0')}`;
+      
+      // Check if the selected month is in the past
+      const currentDate = new Date();
+      currentDate.setDate(1);
+      currentDate.setHours(0, 0, 0, 0);
+      
+      const selectedDate = new Date(selectedMonth);
+      selectedDate.setDate(1);
+      selectedDate.setHours(0, 0, 0, 0);
+
+      if (selectedDate < currentDate) {
+        Alert.alert(
+          'Invalid Date',
+          'You can only set budgets for the current month and future months.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       const updatedBudgets = [...budgets];
       const existingIndex = updatedBudgets.findIndex(b => b.month === monthKey);
 
@@ -105,6 +143,7 @@ const BudgetsScreen = () => {
               mode="date"
               display="default"
               onChange={handleDateChange}
+              minimumDate={new Date()} // Set minimum date to current date
             />
           )}
 
@@ -134,21 +173,23 @@ const BudgetsScreen = () => {
           {budgets.length === 0 ? (
             <Text style={styles.noBudgets}>No budgets set</Text>
           ) : (
-            budgets.map((budget) => (
-              <List.Item
-                key={budget.month}
-                title={formatMonth(budget.month)}
-                description={`$${budget.amount.toFixed(2)}`}
-                right={props => (
-                  <IconButton
-                    {...props}
-                    icon="delete"
-                    onPress={() => handleDeleteBudget(budget.month)}
-                  />
-                )}
-                style={styles.budgetItem}
-              />
-            ))
+            budgets
+              .sort((a, b) => a.month.localeCompare(b.month))
+              .map((budget) => (
+                <List.Item
+                  key={budget.month}
+                  title={formatMonth(budget.month)}
+                  description={`$${budget.amount.toFixed(2)}`}
+                  right={props => (
+                    <IconButton
+                      {...props}
+                      icon="delete"
+                      onPress={() => handleDeleteBudget(budget.month)}
+                    />
+                  )}
+                  style={styles.budgetItem}
+                />
+              ))
           )}
         </Card.Content>
       </Card>
