@@ -1,27 +1,26 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '../config';
+import { USERS } from '../config';
 
 export const register = async (username, password) => {
   try {
-    const response = await fetch(`${API_URL}/users`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username,
-        password,
-        createdAt: new Date().toISOString(),
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Registration failed');
+    // Check if username already exists
+    const existingUser = USERS.find(user => user.username === username);
+    if (existingUser) {
+      throw new Error('Username already exists');
     }
 
-    const user = await response.json();
-    await AsyncStorage.setItem('user', JSON.stringify(user));
-    return user;
+    // Create new user
+    const newUser = {
+      id: (USERS.length + 1).toString(),
+      username,
+      password,
+      createdAt: new Date().toISOString()
+    };
+
+    // In a real app, you would save this to a database
+    // For now, we'll just store it in AsyncStorage
+    await AsyncStorage.setItem('user', JSON.stringify(newUser));
+    return newUser;
   } catch (error) {
     console.error('Registration error:', error);
     throw error;
@@ -30,10 +29,7 @@ export const register = async (username, password) => {
 
 export const login = async (username, password) => {
   try {
-    const response = await fetch(`${API_URL}/users`);
-    const users = await response.json();
-    
-    const user = users.find(
+    const user = USERS.find(
       u => u.username === username && u.password === password
     );
 
