@@ -89,9 +89,12 @@ const HomeScreen = ({ route }) => {
       } else {
         console.log('No user data found in AsyncStorage');
       }
+
       const activeBudgetData = await AsyncStorage.getItem('activeBudget');
+      console.log('Loaded active budget data:', activeBudgetData);
       if (activeBudgetData) {
         const budget = JSON.parse(activeBudgetData);
+        console.log('Parsed budget data:', budget);
         setActiveBudget(budget);
         setMonthlyBudget(budget.amount);
       }
@@ -105,7 +108,14 @@ const HomeScreen = ({ route }) => {
       setLoading(true);
       console.log('Loading expenses...');
       const data = await getExpenses();
-      console.log('Expenses loaded:', data);
+      console.log('All expenses loaded:', data);
+      
+      if (!data || data.length === 0) {
+        console.log('No expenses found');
+        setExpenses([]);
+        calculateTotals([]);
+        return;
+      }
       
       // Filter expenses for today only
       const today = new Date();
@@ -113,11 +123,18 @@ const HomeScreen = ({ route }) => {
       
       const todayExpenses = data.filter(expense => {
         const expenseDate = new Date(expense.createdAt);
-        return expenseDate.getDate() === today.getDate() &&
+        const isToday = expenseDate.getDate() === today.getDate() &&
                expenseDate.getMonth() === today.getMonth() &&
                expenseDate.getFullYear() === today.getFullYear();
+        console.log('Checking expense:', {
+          expense,
+          expenseDate: expenseDate.toISOString(),
+          isToday
+        });
+        return isToday;
       });
       
+      console.log('Today\'s expenses:', todayExpenses);
       setExpenses(todayExpenses);
       calculateTotals(data); // Still calculate totals from all expenses
     } catch (error) {
@@ -135,6 +152,7 @@ const HomeScreen = ({ route }) => {
 
   useFocusEffect(
     useCallback(() => {
+      console.log('Screen focused, reloading data...');
       loadUserData();
       loadExpenses();
     }, [])
@@ -142,6 +160,7 @@ const HomeScreen = ({ route }) => {
 
   useEffect(() => {
     if (route.params?.refresh) {
+      console.log('Refresh param detected, reloading expenses...');
       loadExpenses();
       navigation.setParams({ refresh: undefined });
     }
@@ -316,10 +335,9 @@ const HomeScreen = ({ route }) => {
       </ScrollView>
 
       <FAB
-        style={[styles.fab, { backgroundColor: '#fff' }]}
+        style={styles.fab}
         icon="plus"
         onPress={() => navigation.navigate('AddExpense')}
-        color="#000"
       />
     </View>
   );
@@ -425,7 +443,6 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
-    elevation: 4,
   },
 });
 
