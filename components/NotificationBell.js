@@ -1,40 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { TouchableOpacity, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { IconButton, Badge } from 'react-native-paper';
-import * as Notifications from 'expo-notifications';
-import { getNotificationSettings } from '../services/notifications';
+import { getUnreadNotificationCount } from '../services/notifications';
 
 const NotificationBell = ({ onPress }) => {
   const [unreadCount, setUnreadCount] = useState(0);
-  const [settings, setSettings] = useState(null);
+
+  const loadUnreadCount = async () => {
+    const count = await getUnreadNotificationCount();
+    setUnreadCount(count);
+  };
 
   useEffect(() => {
-    loadSettings();
-    setupNotificationListener();
+    loadUnreadCount();
+    // Refresh unread count every minute
+    const interval = setInterval(loadUnreadCount, 60000);
+    return () => clearInterval(interval);
   }, []);
 
-  const loadSettings = async () => {
-    const notificationSettings = await getNotificationSettings();
-    setSettings(notificationSettings);
-  };
-
-  const setupNotificationListener = () => {
-    const subscription = Notifications.addNotificationReceivedListener(notification => {
-      setUnreadCount(prev => prev + 1);
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  };
-
   return (
-    <TouchableOpacity onPress={onPress} style={styles.container}>
+    <View style={styles.container}>
       <IconButton
         icon="bell"
         size={24}
-        iconColor="#fff"
-        style={styles.icon}
+        onPress={() => {
+          onPress();
+          loadUnreadCount(); // Refresh count after viewing notifications
+        }}
       />
       {unreadCount > 0 && (
         <Badge
@@ -44,17 +36,13 @@ const NotificationBell = ({ onPress }) => {
           {unreadCount}
         </Badge>
       )}
-    </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-    marginRight: 8,
-  },
-  icon: {
-    margin: 0,
   },
   badge: {
     position: 'absolute',

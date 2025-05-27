@@ -5,6 +5,7 @@ import { getExpenses, deleteExpense } from '../services/api';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NotificationBell from '../components/NotificationBell';
+import { addBudgetAlert } from '../services/notifications';
 
 const HomeScreen = ({ route }) => {
   const [expenses, setExpenses] = useState([]);
@@ -63,7 +64,12 @@ const HomeScreen = ({ route }) => {
     console.log('Calculated totals:', { todaySum, monthSum });
     setTodayTotal(todaySum);
     setMonthlyTotal(monthSum);
-  }, []);
+
+    // Check budget threshold and add notification if needed
+    if (monthSum >= monthlyBudget * 0.8) {
+      addBudgetAlert(monthSum, monthlyBudget);
+    }
+  }, [monthlyBudget]);
 
   const loadUserData = async () => {
     try {
