@@ -1,80 +1,58 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { TextInput, Button, Text, ActivityIndicator } from 'react-native-paper';
+import { View, StyleSheet, Alert } from 'react-native';
+import { TextInput, Button, Text } from 'react-native-paper';
+import { loginUser } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { login } from '../services/api';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const insets = useSafeAreaInsets();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      setError('Please enter both email and password');
+    if (!username || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
-      const user = await login(email, password);
+      const user = await loginUser(username, password);
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      navigation.replace('Main');
+      navigation.replace('Home');
     } catch (error) {
-      setError(error.message || 'Login failed. Please try again.');
+      Alert.alert('Error', error.message || 'Failed to login');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.logoContainer}>
-        <Text style={styles.title}>Finance Tracker</Text>
-      </View>
-
-      <View style={styles.formContainer}>
-        <TextInput
-          mode="outlined"
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <TextInput
-          mode="outlined"
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={styles.input}
-        />
-
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        <Button
-          mode="contained"
-          onPress={handleLogin}
-          style={styles.button}
-          loading={loading}
-          disabled={loading}
-        >
-          Login
-        </Button>
-
-        <Text style={styles.demoText}>
-          Demo credentials:{'\n'}
-          Email: demo@example.com{'\n'}
-          Password: password
-        </Text>
-      </View>
+    <View style={styles.container}>
+      <Text style={styles.title}>Finance Tracker</Text>
+      <TextInput
+        label="Username"
+        value={username}
+        onChangeText={setUsername}
+        style={styles.input}
+        mode="outlined"
+      />
+      <TextInput
+        label="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        style={styles.input}
+        mode="outlined"
+      />
+      <Button
+        mode="contained"
+        onPress={handleLogin}
+        loading={loading}
+        style={styles.button}
+      >
+        Login
+      </Button>
     </View>
   );
 };
@@ -82,38 +60,20 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: 60,
-    marginBottom: 40,
+    padding: 20,
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#6200ee',
-  },
-  formContainer: {
-    padding: 20,
+    textAlign: 'center',
+    marginBottom: 30,
   },
   input: {
-    marginBottom: 16,
+    marginBottom: 15,
   },
   button: {
-    marginTop: 8,
-    paddingVertical: 8,
-  },
-  error: {
-    color: '#B00020',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  demoText: {
-    marginTop: 24,
-    textAlign: 'center',
-    color: '#666',
-    lineHeight: 20,
+    marginTop: 10,
   },
 });
 
