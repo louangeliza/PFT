@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Alert, TouchableOpacity } from 'react-native';
-import { FAB, List, Text, ActivityIndicator } from 'react-native-paper';
+import { FAB, List, Text, ActivityIndicator, IconButton } from 'react-native-paper';
 import { getExpenses, deleteExpense } from '../services/api';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,6 +9,17 @@ const HomeScreen = ({ route }) => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+
+  const formatAmount = (amount) => {
+    try {
+      // Convert to number and handle potential string values
+      const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+      return isNaN(numAmount) ? '0.00' : numAmount.toFixed(2);
+    } catch (error) {
+      console.error('Error formatting amount:', error);
+      return '0.00';
+    }
+  };
 
   const loadExpenses = async () => {
     try {
@@ -78,21 +89,25 @@ const HomeScreen = ({ route }) => {
   };
 
   const renderExpense = ({ item }) => (
-    <List.Item
-      title={item.name}
-      description={`$${parseFloat(item.amount).toFixed(2)}`}
-      left={props => <List.Icon {...props} icon="cash" />}
-      right={props => (
+    <TouchableOpacity
+      onPress={() => navigation.navigate('ExpenseDetails', { expenseId: item.id })}
+      style={styles.listItem}
+    >
+      <View style={styles.listItemContent}>
+        <View style={styles.listItemLeft}>
+          <List.Icon icon="cash" />
+          <View>
+            <Text style={styles.expenseName}>{item.name}</Text>
+            <Text style={styles.expenseAmount}>${formatAmount(item.amount)}</Text>
+          </View>
+        </View>
         <IconButton
-          {...props}
           icon="delete"
           size={20}
           onPress={() => handleDelete(item.id)}
         />
-      )}
-      onPress={() => navigation.navigate('ExpenseDetails', { expenseId: item.id })}
-      style={styles.listItem}
-    />
+      </View>
+    </TouchableOpacity>
   );
 
   if (loading) {
@@ -148,6 +163,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 8,
     elevation: 2,
+  },
+  listItemContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 8,
+  },
+  listItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  expenseName: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  expenseAmount: {
+    fontSize: 14,
+    color: '#666',
   },
   fab: {
     position: 'absolute',
