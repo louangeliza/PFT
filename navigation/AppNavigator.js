@@ -6,6 +6,7 @@ import LoginScreen from '../screens/LoginScreen';
 import MainNavigator from './MainNavigator';
 import AddExpenseScreen from '../screens/AddExpenseScreen';
 import ExpenseDetailsScreen from '../screens/ExpenseDetailsScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 import { useAuth } from '../context/AuthContext';
 
 const Stack = createNativeStackNavigator();
@@ -61,6 +62,14 @@ const AppNavigator = () => {
               component={ExpenseDetailsScreen}
               options={{ 
                 title: 'Expense Details',
+                headerShown: true,
+              }}
+            />
+            <Stack.Screen 
+              name="Notifications" 
+              component={NotificationsScreen}
+              options={{ 
+                title: 'Notifications',
                 headerShown: true,
               }}
             />

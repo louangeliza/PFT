@@ -68,20 +68,20 @@ export const getExpenseById = async (id) => {
 
 export const createExpense = async (expenseData) => {
   try {
-    const user = JSON.parse(await AsyncStorage.getItem('user'));
+    const user = await AsyncStorage.getItem('user');
     if (!user) {
       throw new Error('User not logged in');
     }
-    // Add userId to the expense data
-    const dataWithUserId = {
+    const userData = JSON.parse(user);
+    
+    const response = await api.post('/expenses', {
       ...expenseData,
-      userId: user.id
-    };
-    console.log('Creating expense with data:', dataWithUserId);
-    const response = await api.post('/expenses', dataWithUserId);
+      userId: userData.id, // Ensure userId is always set
+    });
+    
     return response.data;
   } catch (error) {
-    console.error('Error in createExpense:', error);
+    console.error('Error creating expense:', error);
     throw error;
   }
 };

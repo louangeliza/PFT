@@ -54,10 +54,7 @@ const AddExpenseScreen = ({ navigation }) => {
         [
           {
             text: 'OK',
-            onPress: () => {
-              // Force refresh the home screen
-              navigation.navigate('Home', { refresh: true });
-            }
+            onPress: () => navigation.navigate('Main', { refresh: true })
           }
         ]
       );
