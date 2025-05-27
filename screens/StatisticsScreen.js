@@ -1,284 +1,168 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Dimensions, Alert } from 'react-native';
-import { Text, Card, ActivityIndicator } from 'react-native-paper';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { Text, Card, Title } from 'react-native-paper';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import { getExpenses } from '../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
 
 const StatisticsScreen = () => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [chartData, setChartData] = useState({
-    daily: { labels: [], datasets: [{ data: [] }] },
-    monthly: { labels: [], datasets: [{ data: [] }] },
-    categories: { labels: [], data: [] }
-  });
-  const [insights, setInsights] = useState({
-    highestSpendingDay: { date: '', amount: 0 },
-    averageDailySpending: 0,
-    topCategory: { name: '', amount: 0 }
-  });
-  const screenWidth = Dimensions.get('window').width - 24;
-  const chartHeight = 180;
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
+  const [dailyData, setDailyData] = useState([]);
 
-  const formatAmount = (amount) => {
-    try {
-      const numAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
-      return isNaN(numAmount) ? '0.00' : numAmount.toFixed(2);
-    } catch (error) {
-      console.error('Error formatting amount:', error);
-      return '0.00';
-    }
-  };
+  const screenWidth = Dimensions.get('window').width;
+
+  useEffect(() => {
+    loadExpenses();
+  }, []);
 
   const loadExpenses = async () => {
     try {
-      setLoading(true);
       const data = await getExpenses();
       setExpenses(data);
-      processExpenseData(data);
+      processData(data);
     } catch (error) {
       console.error('Error loading expenses:', error);
-      if (error.message === 'User not logged in') {
-        await AsyncStorage.removeItem('user');
-        navigation.replace('Login');
-      } else {
-        Alert.alert('Error', 'Failed to load expenses');
-      }
     } finally {
       setLoading(false);
     }
   };
 
-  const processExpenseData = (expenseData) => {
-    // Process daily spending data
-    const dailyData = processDailyData(expenseData);
-    // Process monthly spending data
-    const monthlyData = processMonthlyData(expenseData);
-    // Process category data
-    const categoryData = processCategoryData(expenseData);
-    // Calculate insights
-    const newInsights = calculateInsights(expenseData, dailyData);
-
-    setChartData({
-      daily: dailyData,
-      monthly: monthlyData,
-      categories: categoryData
-    });
-    setInsights(newInsights);
-  };
-
-  const processDailyData = (expenseData) => {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
-    }).reverse();
-
-    const dailySpending = last7Days.map(date => {
-      const dayExpenses = expenseData.filter(expense => 
-        expense.createdAt.split('T')[0] === date
-      );
-      return dayExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const processData = (data) => {
+    // Process monthly data
+    const monthlyTotals = {};
+    data.forEach(expense => {
+      const date = new Date(expense.createdAt);
+      const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      monthlyTotals[monthKey] = (monthlyTotals[monthKey] || 0) + Number(expense.amount);
     });
 
-    return {
-      labels: last7Days.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'short' })),
-      datasets: [{ data: dailySpending }]
-    };
-  };
-
-  const processMonthlyData = (expenseData) => {
-    const last6Months = Array.from({ length: 6 }, (_, i) => {
-      const date = new Date();
-      date.setMonth(date.getMonth() - i);
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    }).reverse();
-
-    const monthlySpending = last6Months.map(month => {
-      const monthExpenses = expenseData.filter(expense => 
-        expense.createdAt.startsWith(month)
-      );
-      return monthExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-    });
-
-    return {
-      labels: last6Months.map(month => {
-        const [year, monthNum] = month.split('-');
-        return new Date(year, monthNum - 1).toLocaleDateString('en-US', { month: 'short' });
+    const monthlyChartData = {
+      labels: Object.keys(monthlyTotals).map(key => {
+        const [year, month] = key.split('-');
+        return `${month}/${year.slice(2)}`;
       }),
-      datasets: [{ data: monthlySpending }]
+      datasets: [{
+        data: Object.values(monthlyTotals)
+      }]
     };
-  };
+    setMonthlyData(monthlyChartData);
 
-  const processCategoryData = (expenseData) => {
-    const categoryTotals = expenseData.reduce((acc, expense) => {
-      const category = expense.category || 'Uncategorized';
-      acc[category] = (acc[category] || 0) + Number(expense.amount);
-      return acc;
-    }, {});
+    // Process category data
+    const categoryTotals = {};
+    data.forEach(expense => {
+      const category = expense.category || 'Other';
+      categoryTotals[category] = (categoryTotals[category] || 0) + Number(expense.amount);
+    });
 
-    const sortedCategories = Object.entries(categoryTotals)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5);
+    const categoryChartData = Object.entries(categoryTotals).map(([category, amount]) => ({
+      name: category,
+      amount: amount,
+      color: getRandomColor(),
+      legendFontColor: '#7F7F7F',
+      legendFontSize: 12
+    }));
+    setCategoryData(categoryChartData);
 
-    return {
-      labels: sortedCategories.map(([category]) => category),
-      data: sortedCategories.map(([, amount]) => amount)
-    };
-  };
+    // Process daily data (last 30 days)
+    const dailyTotals = {};
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const calculateInsights = (expenseData, dailyData) => {
-    // Find highest spending day
-    const highestDayIndex = dailyData.datasets[0].data.indexOf(Math.max(...dailyData.datasets[0].data));
-    const highestSpendingDay = {
-      date: dailyData.labels[highestDayIndex],
-      amount: dailyData.datasets[0].data[highestDayIndex]
-    };
-
-    // Calculate average daily spending
-    const totalSpending = dailyData.datasets[0].data.reduce((sum, amount) => sum + amount, 0);
-    const averageDailySpending = totalSpending / dailyData.datasets[0].data.length;
-
-    // Find top spending category
-    const categoryTotals = expenseData.reduce((acc, expense) => {
-      const category = expense.category || 'Uncategorized';
-      acc[category] = (acc[category] || 0) + Number(expense.amount);
-      return acc;
-    }, {});
-
-    const topCategory = Object.entries(categoryTotals)
-      .sort(([, a], [, b]) => b - a)[0];
-
-    return {
-      highestSpendingDay,
-      averageDailySpending,
-      topCategory: {
-        name: topCategory[0],
-        amount: topCategory[1]
+    data.forEach(expense => {
+      const date = new Date(expense.createdAt);
+      if (date >= thirtyDaysAgo) {
+        const dayKey = date.toISOString().split('T')[0];
+        dailyTotals[dayKey] = (dailyTotals[dayKey] || 0) + Number(expense.amount);
       }
+    });
+
+    const dailyChartData = {
+      labels: Object.keys(dailyTotals).map(key => {
+        const date = new Date(key);
+        return `${date.getMonth() + 1}/${date.getDate()}`;
+      }),
+      datasets: [{
+        data: Object.values(dailyTotals)
+      }]
     };
+    setDailyData(dailyChartData);
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadExpenses();
-    }, [])
-  );
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
+  const getRandomColor = () => {
+    const colors = [
+      '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+      '#FF9F40', '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
 
   const chartConfig = {
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
-    color: (opacity = 1) => `rgba(81, 45, 168, ${opacity})`,
-    strokeWidth: 1,
-    barPercentage: 0.6,
+    backgroundGradientFrom: '#fff',
+    backgroundGradientTo: '#fff',
+    color: (opacity = 1) => `rgba(98, 0, 238, ${opacity})`,
+    strokeWidth: 2,
+    barPercentage: 0.5,
     useShadowColorFromDataset: false,
     decimalPlaces: 0,
-    formatYLabel: (value) => `$${value}`,
-    propsForLabels: {
-      fontSize: 9,
-    },
-    propsForBackgroundLines: {
-      strokeWidth: 0.5,
-      stroke: '#e0e0e0',
-    },
-    propsForDots: {
-      r: '3',
-      strokeWidth: '1',
-    },
   };
 
   return (
     <ScrollView style={styles.container}>
       <Card style={styles.card}>
-        <Card.Content style={styles.cardContent}>
-          <Text style={styles.title}>Daily Spending</Text>
-          <BarChart
-            data={chartData.daily}
-            width={screenWidth}
-            height={chartHeight}
-            chartConfig={chartConfig}
-            verticalLabelRotation={30}
-            showValuesOnTopOfBars
-            fromZero
-            style={styles.chart}
-            yAxisLabel="$"
-            yAxisSuffix=""
-            withInnerLines={false}
-          />
+        <Card.Content>
+          <Title style={styles.title}>Monthly Spending</Title>
+          {monthlyData.labels && monthlyData.labels.length > 0 ? (
+            <BarChart
+              data={monthlyData}
+              width={screenWidth - 40}
+              height={220}
+              chartConfig={chartConfig}
+              style={styles.chart}
+              showValuesOnTopOfBars
+            />
+          ) : (
+            <Text style={styles.noData}>No monthly data available</Text>
+          )}
         </Card.Content>
       </Card>
 
       <Card style={styles.card}>
-        <Card.Content style={styles.cardContent}>
-          <Text style={styles.title}>Monthly Spending Trend</Text>
-          <LineChart
-            data={chartData.monthly}
-            width={screenWidth}
-            height={chartHeight}
-            chartConfig={chartConfig}
-            bezier
-            style={styles.chart}
-            yAxisLabel="$"
-            yAxisSuffix=""
-            withInnerLines={false}
-          />
+        <Card.Content>
+          <Title style={styles.title}>Spending by Category</Title>
+          {categoryData.length > 0 ? (
+            <PieChart
+              data={categoryData}
+              width={screenWidth - 40}
+              height={220}
+              chartConfig={chartConfig}
+              accessor="amount"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              style={styles.chart}
+            />
+          ) : (
+            <Text style={styles.noData}>No category data available</Text>
+          )}
         </Card.Content>
       </Card>
 
       <Card style={styles.card}>
-        <Card.Content style={styles.cardContent}>
-          <Text style={styles.title}>Spending by Category</Text>
-          <PieChart
-            data={chartData.categories.data.map((value, index) => ({
-              value,
-              name: chartData.categories.labels[index],
-              color: `rgba(81, 45, 168, ${0.8 - (index * 0.1)})`,
-              legendFontColor: '#7F7F7F',
-              legendFontSize: 9
-            }))}
-            width={screenWidth}
-            height={chartHeight}
-            chartConfig={chartConfig}
-            accessor="value"
-            backgroundColor="transparent"
-            paddingLeft="0"
-            absolute
-            style={styles.chart}
-          />
-        </Card.Content>
-      </Card>
-
-      <Card style={styles.card}>
-        <Card.Content style={styles.cardContent}>
-          <Text style={styles.title}>Insights</Text>
-          <View style={styles.insightItem}>
-            <Text style={styles.insightLabel}>Highest Spending Day:</Text>
-            <Text style={styles.insightValue}>
-              {insights.highestSpendingDay.date} (${insights.highestSpendingDay.amount.toFixed(2)})
-            </Text>
-          </View>
-          <View style={styles.insightItem}>
-            <Text style={styles.insightLabel}>Average Daily Spending:</Text>
-            <Text style={styles.insightValue}>
-              ${insights.averageDailySpending.toFixed(2)}
-            </Text>
-          </View>
-          <View style={styles.insightItem}>
-            <Text style={styles.insightLabel}>Top Spending Category:</Text>
-            <Text style={styles.insightValue}>
-              {insights.topCategory.name} (${insights.topCategory.amount.toFixed(2)})
-            </Text>
-          </View>
+        <Card.Content>
+          <Title style={styles.title}>Daily Spending (Last 30 Days)</Title>
+          {dailyData.labels && dailyData.labels.length > 0 ? (
+            <LineChart
+              data={dailyData}
+              width={screenWidth - 40}
+              height={220}
+              chartConfig={chartConfig}
+              bezier
+              style={styles.chart}
+            />
+          ) : (
+            <Text style={styles.noData}>No daily data available</Text>
+          )}
         </Card.Content>
       </Card>
     </ScrollView>
@@ -289,47 +173,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    padding: 12,
+    padding: 16,
   },
   card: {
-    marginBottom: 12,
+    marginBottom: 16,
     elevation: 2,
   },
-  cardContent: {
-    padding: 8,
-  },
   title: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: 18,
+    marginBottom: 16,
+    color: '#333',
   },
   chart: {
-    marginVertical: 2,
-    borderRadius: 8,
+    marginVertical: 8,
+    borderRadius: 16,
   },
-  insightItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  insightLabel: {
-    fontSize: 13,
+  noData: {
+    textAlign: 'center',
     color: '#666',
-    flex: 1,
-  },
-  insightValue: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    textAlign: 'right',
-    flex: 1,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginVertical: 20,
   },
 });
 
