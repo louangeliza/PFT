@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { login } from '../services/auth';
@@ -8,39 +8,32 @@ const LoginScreen = ({ navigation, route }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    console.log('LoginScreen mounted, route params:', route.params);
-  }, []);
-
   const handleLogin = async () => {
+    console.log('Login attempt with:', { username, password });
+    
     if (!username || !password) {
+      console.log('Login validation failed: Empty fields');
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     try {
       setLoading(true);
-      console.log('Attempting login with username:', username);
-      
+      console.log('Calling login service...');
       const user = await login(username, password);
-      console.log('Login successful, user data received');
+      console.log('Login successful, user:', user);
       
-      // Get the onLogin callback from route params
-      const onLogin = route.params?.onLogin;
-      console.log('LoginScreen - onLogin callback:', onLogin ? 'present' : 'missing');
-      
-      if (!onLogin) {
-        console.error('Login callback not found in route params:', route.params);
-        throw new Error('Login callback not found');
+      // Call the onLogin callback from route params
+      if (route.params?.onLogin) {
+        console.log('Calling onLogin callback');
+        route.params.onLogin(user);
+      } else {
+        console.error('No onLogin callback found');
+        Alert.alert('Error', 'Navigation failed. Please try again.');
       }
-
-      // Call the onLogin callback
-      console.log('Calling onLogin callback with user data');
-      await onLogin(user);
-      console.log('onLogin callback completed successfully');
     } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert('Error', error.message || 'Login failed. Please try again.');
+      console.error('Login screen error:', error);
+      Alert.alert('Error', error.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -52,14 +45,20 @@ const LoginScreen = ({ navigation, route }) => {
       <TextInput
         label="Username"
         value={username}
-        onChangeText={setUsername}
+        onChangeText={(text) => {
+          console.log('Username changed:', text);
+          setUsername(text);
+        }}
         style={styles.input}
         autoCapitalize="none"
       />
       <TextInput
         label="Password"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(text) => {
+          console.log('Password changed:', text.length, 'characters');
+          setPassword(text);
+        }}
         secureTextEntry
         style={styles.input}
       />
