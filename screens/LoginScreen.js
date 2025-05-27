@@ -3,7 +3,7 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { login } from '../services/auth';
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = ({ navigation, route }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,14 +20,17 @@ const LoginScreen = ({ navigation }) => {
     try {
       setLoading(true);
       console.log('Calling login service...');
-      await login(username, password);
-      console.log('Login successful, navigating to Main...');
+      const user = await login(username, password);
+      console.log('Login successful, user:', user);
       
-      // Navigate to Main through the root navigator
-      navigation.getParent()?.reset({
-        index: 0,
-        routes: [{ name: 'Main' }],
-      });
+      // Call the onLogin callback from route params
+      if (route.params?.onLogin) {
+        console.log('Calling onLogin callback');
+        route.params.onLogin(user);
+      } else {
+        console.error('No onLogin callback found');
+        Alert.alert('Error', 'Navigation failed. Please try again.');
+      }
     } catch (error) {
       console.error('Login screen error:', error);
       Alert.alert('Error', error.message || 'Login failed');

@@ -18,6 +18,7 @@ const RootNavigator = () => {
   const checkUser = async () => {
     try {
       const currentUser = await getCurrentUser();
+      console.log('Current user in RootNavigator:', currentUser);
       setUser(currentUser);
     } catch (error) {
       console.error('Error checking user:', error);
@@ -42,11 +43,13 @@ const RootNavigator = () => {
           <Stack.Screen 
             name="Main" 
             component={MainNavigator}
+            initialParams={{ user }}
           />
         ) : (
           <Stack.Screen 
             name="Auth" 
             component={AuthNavigator}
+            initialParams={{ onLogin: (userData) => setUser(userData) }}
           />
         )}
       </Stack.Navigator>

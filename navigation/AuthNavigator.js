@@ -10,11 +10,28 @@ const AuthNavigator = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        gestureEnabled: false,
       }}
       initialRouteName="Login"
     >
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen 
+        name="Login" 
+        component={LoginScreen}
+        listeners={{
+          focus: () => {
+            console.log('Login screen focused');
+          }
+        }}
+      />
+      <Stack.Screen 
+        name="Register" 
+        component={RegisterScreen}
+        listeners={{
+          focus: () => {
+            console.log('Register screen focused');
+          }
+        }}
+      />
     </Stack.Navigator>
   );
 };
