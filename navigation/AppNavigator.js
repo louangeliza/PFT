@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -18,6 +19,8 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const MainTabs = () => {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -25,7 +28,7 @@ const MainTabs = () => {
         tabBarInactiveTintColor: '#666',
         tabBarStyle: {
           elevation: 8,
-          height: 60,
+          height: 60 + insets.bottom,
           paddingBottom: 8,
         },
         headerStyle: {
@@ -80,6 +83,7 @@ const MainTabs = () => {
 const AppNavigator = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userToken, setUserToken] = useState(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     // Check for stored user data when app starts
@@ -101,7 +105,13 @@ const AppNavigator = () => {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+      }}>
         <ActivityIndicator size="large" />
       </View>
     );
@@ -117,6 +127,9 @@ const AppNavigator = () => {
         headerTintColor: '#fff',
         headerTitleStyle: {
           fontWeight: 'bold',
+        },
+        contentStyle: {
+          backgroundColor: '#f5f5f5',
         },
       }}
     >
