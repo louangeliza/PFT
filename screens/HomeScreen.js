@@ -27,24 +27,22 @@ const HomeScreen = ({ route }) => {
     }
   };
 
-  const getDisplayName = (email) => {
-    console.log('Getting display name for email:', email);
-    if (!email) {
-      console.log('No email provided, returning default');
+  const getDisplayName = (user) => {
+    console.log('Getting display name for user:', user);
+    if (!user) {
+      console.log('No user provided, returning default');
       return 'User';
     }
     try {
-      // Get the part before @
-      const username = email.split('@')[0];
-      console.log('Extracted username:', username);
-      if (!username) {
-        console.log('No valid username found, returning default');
-        return 'User';
+      // Use username directly if available
+      if (user.username) {
+        console.log('Using username:', user.username);
+        return user.username.charAt(0).toUpperCase() + user.username.slice(1);
       }
-      // Capitalize first letter and return
-      return username.charAt(0).toUpperCase() + username.slice(1);
+      console.log('No username found, returning default');
+      return 'User';
     } catch (error) {
-      console.error('Error extracting display name:', error);
+      console.error('Error getting display name:', error);
       return 'User';
     }
   };
@@ -97,12 +95,13 @@ const HomeScreen = ({ route }) => {
       if (userData) {
         const parsedUser = JSON.parse(userData);
         console.log('Parsed user data:', parsedUser);
+        console.log('User fields:', Object.keys(parsedUser));
         
-        if (parsedUser && parsedUser.email) {
-          console.log('Setting user with email:', parsedUser.email);
+        if (parsedUser && parsedUser.username) {
+          console.log('Setting user with username:', parsedUser.username);
           setUser(parsedUser);
         } else {
-          console.log('No email found in parsed user data');
+          console.log('No username found in parsed user data');
           setUser(null);
         }
       } else {
@@ -191,7 +190,7 @@ const HomeScreen = ({ route }) => {
     navigation.setOptions({
       headerTitle: () => (
         <Text style={{ color: '#000', fontSize: 20, fontWeight: 'bold' }}>
-          Welcome, {user ? getDisplayName(user.email) : 'User'}
+          Welcome, {user ? getDisplayName(user) : 'User'}
         </Text>
       ),
       headerStyle: {
@@ -255,8 +254,8 @@ const HomeScreen = ({ route }) => {
     >
       <View style={styles.listItemContent}>
         <View style={styles.listItemLeft}>
-          <List.Icon icon="cash" />
-          <View>
+          <List.Icon icon="cash" style={styles.expenseIcon} />
+          <View style={styles.expenseInfo}>
             <Text style={styles.expenseName}>{item.name}</Text>
             <Text style={styles.expenseAmount}>${formatAmount(item.amount)}</Text>
           </View>
@@ -444,10 +443,20 @@ const styles = StyleSheet.create({
   listItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  expenseIcon: {
+    margin: 0,
+    marginRight: 12,
+  },
+  expenseInfo: {
+    flex: 1,
+    marginLeft: 4,
   },
   expenseName: {
     fontSize: 16,
     color: '#333',
+    marginBottom: 4,
   },
   expenseAmount: {
     fontSize: 14,

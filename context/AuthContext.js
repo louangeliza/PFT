@@ -29,10 +29,16 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       const userData = await loginUser(username, password);
+      console.log('Login successful, user data:', userData);
+      if (!userData.username) {
+        console.error('No username in user data:', userData);
+        throw new Error('Invalid user data received');
+      }
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       return userData;
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
