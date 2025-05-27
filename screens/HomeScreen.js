@@ -153,12 +153,14 @@ const HomeScreen = ({ route }) => {
       
       const todayExpenses = data.filter(expense => {
         const expenseDate = new Date(expense.createdAt);
-        const isToday = expenseDate.getDate() === today.getDate() &&
-               expenseDate.getMonth() === today.getMonth() &&
-               expenseDate.getFullYear() === today.getFullYear();
+        // Reset hours to handle timezone differences
+        expenseDate.setHours(0, 0, 0, 0);
+        
+        const isToday = expenseDate.getTime() === today.getTime();
         console.log('Checking expense:', {
           expense,
           expenseDate: expenseDate.toISOString(),
+          today: today.toISOString(),
           isToday
         });
         return isToday;
