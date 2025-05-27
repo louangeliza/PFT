@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Alert, TouchableOpacity } from 'react-native';
-import { FAB, Card, Title, Paragraph, IconButton, Text, ActivityIndicator } from 'react-native-paper';
+import { FAB, List, Text, ActivityIndicator } from 'react-native-paper';
 import { getExpenses, deleteExpense } from '../services/api';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -47,43 +47,52 @@ const HomeScreen = ({ route }) => {
   }, [route.params?.refresh]);
 
   const handleDelete = async (id) => {
-    try {
-      await deleteExpense(id);
-      setExpenses(expenses.filter(expense => expense.id !== id));
-      Alert.alert('Success', 'Expense deleted successfully');
-    } catch (error) {
-      console.error('Error deleting expense:', error);
-      if (error.message === 'Unauthorized to delete this expense') {
-        Alert.alert('Error', 'You are not authorized to delete this expense');
-      } else {
-        Alert.alert('Error', 'Failed to delete expense');
-      }
-    }
+    Alert.alert(
+      'Delete Expense',
+      'Are you sure you want to delete this expense?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteExpense(id);
+              setExpenses(expenses.filter(expense => expense.id !== id));
+              Alert.alert('Success', 'Expense deleted successfully');
+            } catch (error) {
+              console.error('Error deleting expense:', error);
+              if (error.message === 'Unauthorized to delete this expense') {
+                Alert.alert('Error', 'You are not authorized to delete this expense');
+              } else {
+                Alert.alert('Error', 'Failed to delete expense');
+              }
+            }
+          },
+        },
+      ]
+    );
   };
 
   const renderExpense = ({ item }) => (
-    <TouchableOpacity
+    <List.Item
+      title={item.name}
+      description={`$${parseFloat(item.amount).toFixed(2)}`}
+      left={props => <List.Icon {...props} icon="cash" />}
+      right={props => (
+        <IconButton
+          {...props}
+          icon="delete"
+          size={20}
+          onPress={() => handleDelete(item.id)}
+        />
+      )}
       onPress={() => navigation.navigate('ExpenseDetails', { expenseId: item.id })}
-    >
-      <Card style={styles.card}>
-        <Card.Content>
-          <View style={styles.cardHeader}>
-            <Title>{item.name}</Title>
-            <IconButton
-              icon="delete"
-              size={20}
-              onPress={(e) => {
-                e.stopPropagation();
-                handleDelete(item.id);
-              }}
-            />
-          </View>
-          <Paragraph>Amount: ${parseFloat(item.amount).toFixed(2)}</Paragraph>
-          <Paragraph>Description: {item.description}</Paragraph>
-          <Paragraph>Date: {new Date(item.createdAt).toLocaleDateString()}</Paragraph>
-        </Card.Content>
-      </Card>
-    </TouchableOpacity>
+      style={styles.listItem}
+    />
   );
 
   if (loading) {
@@ -132,15 +141,13 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   list: {
-    padding: 16,
+    padding: 8,
   },
-  card: {
-    marginBottom: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  listItem: {
+    backgroundColor: 'white',
+    marginBottom: 8,
+    borderRadius: 8,
+    elevation: 2,
   },
   fab: {
     position: 'absolute',
