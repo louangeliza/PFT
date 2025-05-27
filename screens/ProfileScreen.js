@@ -61,7 +61,7 @@ const ProfileScreen = ({ navigation }) => {
               await AsyncStorage.removeItem('user');
               navigation.reset({
                 index: 0,
-                routes: [{ name: 'Login' }],
+                routes: [{ name: 'Auth' }],
               });
             } catch (error) {
               console.error('Error during logout:', error);
