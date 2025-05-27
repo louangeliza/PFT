@@ -36,9 +36,31 @@ const AddExpenseScreen = ({ navigation }) => {
         throw new Error('User not logged in');
       }
 
+      // Check budget before adding expense
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const monthlyExpenses = expenses.filter(expense => {
+        const expenseDate = new Date(expense.createdAt);
+        return expenseDate.getMonth() === currentMonth && 
+               expenseDate.getFullYear() === currentYear;
+      });
+      
+      const monthlyTotal = monthlyExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+      const budgetProgress = (monthlyTotal / monthlyBudget) * 100;
+
+      if (budgetProgress >= 100) {
+        Alert.alert(
+          'Budget Exceeded',
+          'You have exceeded your monthly budget. Cannot add more expenses this month.',
+          [{ text: 'OK' }]
+        );
+        setLoading(false);
+        return;
+      }
+
       const expenseData = {
         name,
-        amount: parseFloat(amount).toFixed(2),
+        amount: parseFloat(amount),
         description,
         createdAt: date.toISOString(),
         userId: user.id
@@ -54,16 +76,13 @@ const AddExpenseScreen = ({ navigation }) => {
         [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('Main', { refresh: true })
+            onPress: () => navigation.goBack()
           }
         ]
       );
     } catch (error) {
-      console.error('Error creating expense:', error);
-      Alert.alert(
-        'Error',
-        error.message || 'Failed to add expense. Please try again.'
-      );
+      console.error('Error adding expense:', error);
+      Alert.alert('Error', 'Failed to add expense. Please try again.');
     } finally {
       setLoading(false);
     }

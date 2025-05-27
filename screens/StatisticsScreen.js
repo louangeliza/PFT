@@ -51,42 +51,63 @@ const StatisticsScreen = () => {
     const categoryExpenses = {};
 
     expenseData.forEach(expense => {
-      const date = new Date(expense.createdAt);
-      const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
-      const dayKey = date.toLocaleDateString();
-      const category = expense.category || 'Uncategorized';
+      try {
+        const date = new Date(expense.createdAt);
+        if (isNaN(date.getTime())) {
+          console.error('Invalid date:', expense.createdAt);
+          return;
+        }
 
-      // Monthly data
-      monthlyExpenses[monthKey] = (monthlyExpenses[monthKey] || 0) + Number(expense.amount);
-      
-      // Daily data
-      dailyExpenses[dayKey] = (dailyExpenses[dayKey] || 0) + Number(expense.amount);
-      
-      // Category data
-      categoryExpenses[category] = (categoryExpenses[category] || 0) + Number(expense.amount);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const category = expense.category || expense.name || 'Uncategorized';
+
+        // Monthly data
+        monthlyExpenses[monthKey] = (monthlyExpenses[monthKey] || 0) + Number(expense.amount);
+        
+        // Daily data
+        dailyExpenses[dayKey] = (dailyExpenses[dayKey] || 0) + Number(expense.amount);
+        
+        // Category data
+        categoryExpenses[category] = (categoryExpenses[category] || 0) + Number(expense.amount);
+      } catch (error) {
+        console.error('Error processing expense:', error, expense);
+      }
     });
 
     // Convert to arrays for charts
     const monthlyChartData = Object.entries(monthlyExpenses)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, amount]) => ({
-        month: month.split('-')[1], // Just the month number
-        amount: amount
-      }));
+      .map(([month, amount]) => {
+        const [year, monthNum] = month.split('-');
+        const date = new Date(year, parseInt(monthNum) - 1);
+        return {
+          month: date.toLocaleDateString('en-US', { month: 'short' }),
+          amount: amount
+        };
+      });
 
-    const dailyChartData = Object.entries(dailyExpenses)
-      .sort(([a], [b]) => new Date(a) - new Date(b))
-      .slice(-7) // Last 7 days
-      .map(([day, amount]) => ({
-        day: new Date(day).toLocaleDateString('en-US', { weekday: 'short' }),
-        amount: amount
-      }));
+    // Get last 7 days of data
+    const today = new Date();
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      return date.toISOString().split('T')[0];
+    }).reverse();
 
+    const dailyChartData = last7Days.map(dayKey => ({
+      day: new Date(dayKey).toLocaleDateString('en-US', { weekday: 'short' }),
+      amount: dailyExpenses[dayKey] || 0
+    }));
+
+    // Process category data
     const categoryChartData = Object.entries(categoryExpenses)
-      .map(([category, amount]) => ({
+      .filter(([_, amount]) => amount > 0) // Only include categories with expenses
+      .sort(([_, a], [__, b]) => b - a) // Sort by amount descending
+      .map(([category, amount], index) => ({
         name: category,
         amount: amount,
-        color: getRandomColor(),
+        color: getRandomColor(index),
         legendFontColor: '#7F7F7F',
         legendFontSize: 12
       }));
@@ -96,12 +117,12 @@ const StatisticsScreen = () => {
     setCategoryData(categoryChartData);
   };
 
-  const getRandomColor = () => {
+  const getRandomColor = (index) => {
     const colors = [
       '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
       '#FF9F40', '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'
     ];
-    return colors[Math.floor(Math.random() * colors.length)];
+    return colors[index % colors.length];
   };
 
   useEffect(() => {
@@ -130,62 +151,74 @@ const StatisticsScreen = () => {
       <Card style={styles.card}>
         <Card.Content>
           <Text style={styles.chartTitle}>Daily Spending (Last 7 Days)</Text>
-          <BarChart
-            data={{
-              labels: dailyData.map(d => d.day),
-              datasets: [{
-                data: dailyData.map(d => d.amount)
-              }]
-            }}
-            width={screenWidth - 32}
-            height={220}
-            chartConfig={chartConfig}
-            style={styles.chart}
-            showValuesOnTopOfBars
-            fromZero
-          />
+          {dailyData.length > 0 ? (
+            <BarChart
+              data={{
+                labels: dailyData.map(d => d.day),
+                datasets: [{
+                  data: dailyData.map(d => d.amount)
+                }]
+              }}
+              width={screenWidth - 32}
+              height={220}
+              chartConfig={chartConfig}
+              style={styles.chart}
+              showValuesOnTopOfBars
+              fromZero
+            />
+          ) : (
+            <Text style={styles.noDataText}>No spending data available</Text>
+          )}
         </Card.Content>
       </Card>
 
       <Card style={styles.card}>
         <Card.Content>
           <Text style={styles.chartTitle}>Monthly Spending Trend</Text>
-          <LineChart
-            data={{
-              labels: monthlyData.map(m => m.month),
-              datasets: [{
-                data: monthlyData.map(m => m.amount)
-              }]
-            }}
-            width={screenWidth - 32}
-            height={220}
-            chartConfig={chartConfig}
-            style={styles.chart}
-            bezier
-          />
+          {monthlyData.length > 0 ? (
+            <LineChart
+              data={{
+                labels: monthlyData.map(m => m.month),
+                datasets: [{
+                  data: monthlyData.map(m => m.amount)
+                }]
+              }}
+              width={screenWidth - 32}
+              height={220}
+              chartConfig={chartConfig}
+              style={styles.chart}
+              bezier
+            />
+          ) : (
+            <Text style={styles.noDataText}>No monthly data available</Text>
+          )}
         </Card.Content>
       </Card>
 
       <Card style={styles.card}>
         <Card.Content>
           <Text style={styles.chartTitle}>Spending by Category</Text>
-          <PieChart
-            data={categoryData}
-            width={screenWidth - 32}
-            height={220}
-            chartConfig={chartConfig}
-            accessor="amount"
-            backgroundColor="transparent"
-            paddingLeft="15"
-            style={styles.chart}
-          />
+          {categoryData.length > 0 ? (
+            <PieChart
+              data={categoryData}
+              width={screenWidth - 32}
+              height={220}
+              chartConfig={chartConfig}
+              accessor="amount"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              style={styles.chart}
+            />
+          ) : (
+            <Text style={styles.noDataText}>No category data available</Text>
+          )}
         </Card.Content>
       </Card>
 
       <Card style={styles.card}>
         <Card.Content>
           <Text style={styles.chartTitle}>Spending Insights</Text>
-          {dailyData.length > 0 && (
+          {dailyData.length > 0 ? (
             <>
               <Text style={styles.insightText}>
                 Highest spending day: {dailyData.reduce((a, b) => a.amount > b.amount ? a : b).day}
@@ -196,11 +229,15 @@ const StatisticsScreen = () => {
                 )}
               </Text>
             </>
+          ) : (
+            <Text style={styles.noDataText}>No spending data available</Text>
           )}
-          {categoryData.length > 0 && (
+          {categoryData.length > 0 ? (
             <Text style={styles.insightText}>
-              Top spending category: {categoryData.reduce((a, b) => a.amount > b.amount ? a : b).name}
+              Top spending category: {categoryData[0].name}
             </Text>
+          ) : (
+            <Text style={styles.noDataText}>No category data available</Text>
           )}
         </Card.Content>
       </Card>
@@ -236,6 +273,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 8,
     color: '#666',
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginVertical: 20,
   },
 });
 
