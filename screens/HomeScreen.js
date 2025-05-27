@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Alert, TouchableOpacity } from 'react-native';
-import { FAB, List, Text, ActivityIndicator } from 'react-native-paper';
+import { FAB, List, Text, ActivityIndicator, IconButton } from 'react-native-paper';
 import { getExpenses, deleteExpense } from '../services/api';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,6 +9,45 @@ const HomeScreen = ({ route }) => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+
+  useEffect(() => {
+    // Add logout button to header
+    navigation.setOptions({
+      headerRight: () => (
+        <IconButton
+          icon="logout"
+          iconColor="white"
+          size={24}
+          onPress={handleLogout}
+        />
+      ),
+    });
+  }, [navigation]);
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('user');
+              navigation.replace('Login');
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const loadExpenses = async () => {
     try {
