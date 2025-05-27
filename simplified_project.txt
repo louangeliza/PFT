@@ -1,0 +1,88 @@
+Personal Money Manager (PMS) - Simplified Documentation
+
+1. Core Features
+--------------
+- User Authentication (Login/Register)
+- Expense Management (Add/View/Delete)
+- Basic Statistics (Charts and Reports)
+- User Profile Management
+
+2. Screens
+--------
+2.1 Auth Screens
+- Login Screen
+  * Username/Password login
+  * Link to register
+
+- Register Screen
+  * Create new account
+  * Link to login
+
+2.2 Main Screens
+- Home Screen
+  * Recent expenses
+  * Quick add expense
+  * Navigation menu
+
+- Add Expense Screen
+  * Amount
+  * Category
+  * Description
+  * Date
+
+- Statistics Screen
+  * Monthly spending chart
+  * Category breakdown
+  * Daily spending chart
+
+- Profile Screen
+  * User info
+  * Logout
+
+3. API Endpoints
+--------------
+3.1 Users
+- POST /api/v1/users - Register
+- GET /api/v1/users - Login check
+
+3.2 Expenses
+- GET /api/v1/expenses - List expenses
+- POST /api/v1/expenses - Add expense
+- DELETE /api/v1/expenses/:id - Delete expense
+
+4. Data Structure
+--------------
+4.1 User
+{
+  id: string,
+  username: string,
+  password: string
+}
+
+4.2 Expense
+{
+  id: string,
+  userId: string,
+  amount: number,
+  category: string,
+  description: string,
+  date: string
+}
+
+5. Navigation
+-----------
+Auth Flow:
+Login/Register → Home
+
+Main Flow:
+Home → Add Expense
+Home → Statistics
+Home → Profile
+
+6. Tech Stack
+-----------
+- React Native
+- React Navigation
+- React Native Paper
+- AsyncStorage
+- Mock API 
