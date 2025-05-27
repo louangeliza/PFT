@@ -12,7 +12,7 @@ Notifications.setNotificationHandler({
 
 const NOTIFICATIONS_STORAGE_KEY = 'app_notifications';
 const NOTIFICATION_SETTINGS_KEY = 'notification_settings';
-const NOTIFICATIONS_KEY = '@notifications';
+const NOTIFICATIONS_KEY = 'notifications';
 const BUDGET_THRESHOLDS = [80, 90, 95, 100]; // Percentages at which to send notifications
 
 export const setupNotifications = async () => {
@@ -57,47 +57,79 @@ export const updateNotificationSettings = async (settings) => {
   }
 };
 
-export const addBudgetAlert = async (monthlyTotal, monthlyBudget) => {
+export const addBudgetAlert = async (currentAmount, budgetAmount, budgetType = 'monthly') => {
   try {
-    const percentage = (monthlyTotal / monthlyBudget) * 100;
-    
     // Get existing notifications
-    const existingNotifications = await getNotifications();
+    const notifications = await getNotifications();
     
-    // Check if we already have a notification for this threshold
-    const threshold = BUDGET_THRESHOLDS.find(t => percentage >= t && percentage < t + 5);
-    if (!threshold) return null; // No new threshold reached
+    // Calculate budget percentage
+    const budgetPercentage = (currentAmount / budgetAmount) * 100;
     
-    const existingThresholdNotification = existingNotifications.find(
-      n => n.type === 'budget_alert' && 
-           n.data.threshold === threshold &&
-           new Date(n.timestamp).getDate() === new Date().getDate() // Only check today's notifications
-    );
-    
-    if (existingThresholdNotification) return null; // Already notified for this threshold today
-
-    const notification = {
-      id: Date.now().toString(),
-      type: 'budget_alert',
-      title: 'Budget Alert',
-      message: `You've spent ${percentage.toFixed(1)}% of your monthly budget`,
-      timestamp: new Date().toISOString(),
-      data: {
-        monthlyTotal,
-        monthlyBudget,
-        percentage,
-        threshold
-      },
-      read: false
+    // Define thresholds for different alert levels
+    const thresholds = {
+      exceeded: 100,
+      veryClose: 90,
+      approaching: 80
     };
 
-    const updatedNotifications = [notification, ...existingNotifications];
-    await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(updatedNotifications));
-    return notification;
+    // Check if we already have a notification for this budget type and threshold
+    const existingNotification = notifications.find(n => 
+      n.type === 'budget' && 
+      n.budgetType === budgetType &&
+      n.threshold === getThresholdLevel(budgetPercentage)
+    );
+
+    // Only create a new notification if we don't have one for this threshold
+    if (!existingNotification) {
+      let message = '';
+      let threshold = '';
+
+      if (budgetPercentage >= thresholds.exceeded) {
+        message = `⚠️ You have exceeded your ${budgetType} budget!`;
+        threshold = 'exceeded';
+      } else if (budgetPercentage >= thresholds.veryClose) {
+        message = `⚠️ You are very close to your ${budgetType} budget!`;
+        threshold = 'veryClose';
+      } else if (budgetPercentage >= thresholds.approaching) {
+        message = `⚠️ You are approaching your ${budgetType} budget`;
+        threshold = 'approaching';
+      }
+
+      // Only create notification if we have a message
+      if (message) {
+        const newNotification = {
+          id: Date.now().toString(),
+          message,
+          type: 'budget',
+          budgetType,
+          threshold,
+          createdAt: new Date().toISOString(),
+          read: false
+        };
+
+        // Add new notification to the beginning of the array
+        notifications.unshift(newNotification);
+        
+        // Save updated notifications
+        await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+        
+        // Return the new notification
+        return newNotification;
+      }
+    }
+
+    return null;
   } catch (error) {
     console.error('Error adding budget alert:', error);
-    throw error;
+    return null;
   }
+};
+
+const getThresholdLevel = (percentage) => {
+  if (percentage >= 100) return 'exceeded';
+  if (percentage >= 90) return 'veryClose';
+  if (percentage >= 80) return 'approaching';
+  return null;
 };
 
 export const getNotifications = async () => {
@@ -113,28 +145,28 @@ export const getNotifications = async () => {
 export const markNotificationAsRead = async (notificationId) => {
   try {
     const notifications = await getNotifications();
-    const updatedNotifications = notifications.map(notification =>
-      notification.id === notificationId
+    const updatedNotifications = notifications.map(notification => 
+      notification.id === notificationId 
         ? { ...notification, read: true }
         : notification
     );
     await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(updatedNotifications));
+    return true;
   } catch (error) {
     console.error('Error marking notification as read:', error);
-    throw error;
+    return false;
   }
 };
 
 export const deleteNotification = async (notificationId) => {
   try {
     const notifications = await getNotifications();
-    const updatedNotifications = notifications.filter(
-      notification => notification.id !== notificationId
-    );
+    const updatedNotifications = notifications.filter(notification => notification.id !== notificationId);
     await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(updatedNotifications));
+    return true;
   } catch (error) {
     console.error('Error deleting notification:', error);
-    throw error;
+    return false;
   }
 };
 

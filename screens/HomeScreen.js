@@ -70,7 +70,7 @@ const HomeScreen = ({ route }) => {
     if (activeBudget) {
       const budgetAmount = activeBudget.amount;
       const currentAmount = activeBudget.type === 'daily' ? todaySum : monthSum;
-      addBudgetAlert(currentAmount, budgetAmount);
+      addBudgetAlert(currentAmount, budgetAmount, activeBudget.type);
     }
   }, [activeBudget]);
 
