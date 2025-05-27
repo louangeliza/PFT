@@ -141,14 +141,14 @@ const HomeScreen = ({ route }) => {
   useEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
-        <Text style={{ color: '#00BCD4', fontSize: 20, fontWeight: 'bold' }}>
+        <Text style={{ color: '#000', fontSize: 20, fontWeight: 'bold' }}>
           Welcome, {user ? getDisplayName(user.email) : 'User'}
         </Text>
       ),
       headerStyle: {
         backgroundColor: '#fff',
       },
-      headerTintColor: '#00BCD4',
+      headerTintColor: '#000',
       headerRight: () => (
         <NotificationBell
           onPress={() => navigation.navigate('Notifications')}
@@ -307,10 +307,10 @@ const HomeScreen = ({ route }) => {
       </ScrollView>
 
       <FAB
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: '#fff' }]}
         icon="plus"
         onPress={() => navigation.navigate('AddExpense')}
-        color="#fff"
+        color="#000"
       />
     </View>
   );
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
-    backgroundColor: '#00BCD4',
+    elevation: 4,
   },
 });
 

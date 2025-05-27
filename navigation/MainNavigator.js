@@ -56,7 +56,7 @@ const MainNavigator = ({ navigation }) => {
           headerStyle: {
             backgroundColor: '#fff',
           },
-          headerTintColor: '#00BCD4',
+          headerTintColor: '#000',
         }}
       />
       <Tab.Screen 
