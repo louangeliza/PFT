@@ -1,26 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { USERS } from '../config';
+import axios from 'axios';
+
+const API_URL = 'https://67ac71475853dfff53dab929.mockapi.io/api/v1';
 
 export const register = async (username, password) => {
   try {
-    // Check if username already exists
-    const existingUser = USERS.find(user => user.username === username);
-    if (existingUser) {
-      throw new Error('Username already exists');
-    }
-
-    // Create new user
-    const newUser = {
-      id: (USERS.length + 1).toString(),
+    const response = await axios.post(`${API_URL}/users`, {
       username,
       password,
       createdAt: new Date().toISOString()
-    };
-
-    // In a real app, you would save this to a database
-    // For now, we'll just store it in AsyncStorage
-    await AsyncStorage.setItem('user', JSON.stringify(newUser));
-    return newUser;
+    });
+    
+    const userData = response.data;
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
+    return userData;
   } catch (error) {
     console.error('Registration error:', error);
     throw error;
@@ -29,7 +22,10 @@ export const register = async (username, password) => {
 
 export const login = async (username, password) => {
   try {
-    const user = USERS.find(
+    const response = await axios.get(`${API_URL}/users`);
+    const users = response.data;
+    
+    const user = users.find(
       u => u.username === username && u.password === password
     );
 
