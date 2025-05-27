@@ -30,6 +30,7 @@ const MainTabs = () => {
           elevation: 8,
           height: 60 + insets.bottom,
           paddingBottom: 8,
+          backgroundColor: '#ffffff',
         },
         headerStyle: {
           backgroundColor: '#6200ee',
@@ -83,7 +84,6 @@ const MainTabs = () => {
 const AppNavigator = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userToken, setUserToken] = useState(null);
-  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     // Check for stored user data when app starts
@@ -109,10 +109,9 @@ const AppNavigator = () => {
         flex: 1, 
         justifyContent: 'center', 
         alignItems: 'center',
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom,
+        backgroundColor: '#f5f5f5',
       }}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#6200ee" />
       </View>
     );
   }
