@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
-import { loginUser } from '../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const navigation = useNavigation();
 
   const handleLogin = async () => {
@@ -19,8 +19,7 @@ const LoginScreen = () => {
 
     try {
       setLoading(true);
-      const user = await loginUser(username, password);
-      await AsyncStorage.setItem('user', JSON.stringify(user));
+      await login(username, password);
       navigation.replace('Main');
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to login');
