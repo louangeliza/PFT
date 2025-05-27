@@ -30,7 +30,7 @@ const RootNavigator = () => {
 
   const handleLogin = async (userData) => {
     try {
-      console.log('Handling login with user data:', userData);
+      console.log('RootNavigator - Handling login with user data:', userData);
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
     } catch (error) {
@@ -62,6 +62,11 @@ const RootNavigator = () => {
             name="Auth" 
             component={AuthNavigator}
             initialParams={{ onLogin: handleLogin }}
+            listeners={{
+              focus: () => {
+                console.log('Auth screen focused, onLogin callback:', handleLogin ? 'present' : 'missing');
+              }
+            }}
           />
         )}
       </Stack.Navigator>

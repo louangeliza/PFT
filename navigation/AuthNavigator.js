@@ -5,7 +5,12 @@ import RegisterScreen from '../screens/RegisterScreen';
 
 const Stack = createStackNavigator();
 
-const AuthNavigator = ({ route }) => {
+const AuthNavigator = ({ navigation, route }) => {
+  // Get the onLogin callback from the parent navigator
+  const onLogin = route.params?.onLogin;
+  
+  console.log('AuthNavigator - onLogin callback:', onLogin ? 'present' : 'missing');
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -17,7 +22,7 @@ const AuthNavigator = ({ route }) => {
       <Stack.Screen 
         name="Login" 
         component={LoginScreen}
-        initialParams={{ onLogin: route.params?.onLogin }}
+        initialParams={{ onLogin }}
         listeners={{
           focus: () => {
             console.log('Login screen focused');
