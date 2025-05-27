@@ -36,8 +36,18 @@ const HomeScreen = ({ route }) => {
     try {
       // Use username directly if available
       if (user.username) {
-        console.log('Using username:', user.username);
-        return user.username.charAt(0).toUpperCase() + user.username.slice(1);
+        console.log('Original username:', user.username);
+        // Extract username until first number, special character, or period
+        const cleanUsername = user.username.split(/[0-9._-]/)[0];
+        console.log('Cleaned username:', cleanUsername);
+        
+        if (!cleanUsername) {
+          console.log('No valid username found after cleaning, returning default');
+          return 'User';
+        }
+        
+        // Capitalize first letter and return
+        return cleanUsername.charAt(0).toUpperCase() + cleanUsername.slice(1);
       }
       console.log('No username found, returning default');
       return 'User';

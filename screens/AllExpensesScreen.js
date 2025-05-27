@@ -111,8 +111,8 @@ const AllExpensesScreen = () => {
     >
       <View style={styles.listItemContent}>
         <View style={styles.listItemLeft}>
-          <List.Icon icon="cash" />
-          <View>
+          <List.Icon icon="cash" style={styles.expenseIcon} />
+          <View style={styles.expenseInfo}>
             <Text style={styles.expenseName}>{item.name}</Text>
             <Text style={styles.expenseAmount}>${formatAmount(item.amount)}</Text>
             <Text style={styles.expenseDate}>{formatDate(item.createdAt)}</Text>
@@ -170,13 +170,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   list: {
-    padding: 8,
+    padding: 16,
   },
   listItem: {
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
     marginBottom: 8,
     borderRadius: 8,
     elevation: 2,
@@ -185,40 +184,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 8,
+    padding: 12,
   },
   listItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
+  expenseIcon: {
+    margin: 0,
+    marginRight: 12,
+  },
+  expenseInfo: {
+    flex: 1,
+    marginLeft: 4,
+  },
   expenseName: {
     fontSize: 16,
-    fontWeight: '500',
+    color: '#333',
+    marginBottom: 4,
   },
   expenseAmount: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 2,
   },
   expenseDate: {
     fontSize: 12,
     color: '#999',
-    marginTop: 2,
+  },
+  noExpenses: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 16,
+    marginTop: 16,
+  },
+  addExpenseHint: {
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 14,
+    marginTop: 8,
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 0,
-  },
-  noExpenses: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  addExpenseHint: {
-    color: '#666',
-    textAlign: 'center',
   },
 });
 
