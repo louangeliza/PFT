@@ -11,6 +11,7 @@ Notifications.setNotificationHandler({
 });
 
 const NOTIFICATIONS_STORAGE_KEY = 'app_notifications';
+const NOTIFICATION_SETTINGS_KEY = 'notification_settings';
 
 export const setupNotifications = async () => {
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -28,8 +29,37 @@ export const setupNotifications = async () => {
   return true;
 };
 
+export const getNotificationSettings = async () => {
+  try {
+    const settings = await AsyncStorage.getItem(NOTIFICATION_SETTINGS_KEY);
+    return settings ? JSON.parse(settings) : {
+      budgetAlerts: true,
+      expenseReminders: true,
+      weeklyReports: true,
+    };
+  } catch (error) {
+    console.error('Error getting notification settings:', error);
+    return {
+      budgetAlerts: true,
+      expenseReminders: true,
+      weeklyReports: true,
+    };
+  }
+};
+
+export const updateNotificationSettings = async (settings) => {
+  try {
+    await AsyncStorage.setItem(NOTIFICATION_SETTINGS_KEY, JSON.stringify(settings));
+  } catch (error) {
+    console.error('Error updating notification settings:', error);
+  }
+};
+
 export const addBudgetAlert = async (monthlyTotal, monthlyBudget) => {
   try {
+    const settings = await getNotificationSettings();
+    if (!settings.budgetAlerts) return null;
+
     const threshold = monthlyBudget * 0.8; // Alert at 80% of budget
     const percentage = Math.round((monthlyTotal / monthlyBudget) * 100);
     

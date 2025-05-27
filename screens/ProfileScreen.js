@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, Card, Button, TextInput, Avatar } from 'react-native-paper';
+import { List, Switch, Text, Divider, Button, Card } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { getNotificationSettings, updateNotificationSettings } from '../services/notifications';
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
-  const [monthlyBudget, setMonthlyBudget] = useState('');
-  const navigation = useNavigation();
+  const [settings, setSettings] = useState({
+    budgetAlerts: true,
+    expenseReminders: true,
+    weeklyReports: true,
+  });
 
   useEffect(() => {
     loadUserData();
+    loadSettings();
   }, []);
 
   const loadUserData = async () => {
@@ -19,101 +23,116 @@ const ProfileScreen = () => {
       if (userData) {
         setUser(JSON.parse(userData));
       }
-      const budget = await AsyncStorage.getItem('monthlyBudget');
-      if (budget) {
-        setMonthlyBudget(budget);
-      }
     } catch (error) {
       console.error('Error loading user data:', error);
     }
   };
 
-  const handleUpdateBudget = async () => {
-    try {
-      await AsyncStorage.setItem('monthlyBudget', monthlyBudget);
-      Alert.alert('Success', 'Monthly budget updated successfully');
-    } catch (error) {
-      console.error('Error updating budget:', error);
-      Alert.alert('Error', 'Failed to update monthly budget');
+  const loadSettings = async () => {
+    const savedSettings = await getNotificationSettings();
+    if (savedSettings) {
+      setSettings(savedSettings);
     }
+  };
+
+  const handleToggle = async (key) => {
+    const newSettings = {
+      ...settings,
+      [key]: !settings[key],
+    };
+    setSettings(newSettings);
+    await updateNotificationSettings(newSettings);
   };
 
   const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('user');
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
-    } catch (error) {
-      console.error('Error logging out:', error);
-      Alert.alert('Error', 'Failed to log out');
-    }
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('user');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            } catch (error) {
+              console.error('Error during logout:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
+  const renderSettingItem = ({ title, description, key }) => (
+    <List.Item
+      title={title}
+      description={description}
+      right={() => (
+        <Switch
+          value={settings[key]}
+          onValueChange={() => handleToggle(key)}
+        />
+      )}
+    />
+  );
+
+  const settingsList = [
+    {
+      title: 'Budget Alerts',
+      description: 'Get notified when you reach your budget limit',
+      key: 'budgetAlerts',
+    },
+    {
+      title: 'Expense Reminders',
+      description: 'Receive reminders for recurring expenses',
+      key: 'expenseReminders',
+    },
+    {
+      title: 'Weekly Reports',
+      description: 'Get weekly summaries of your spending',
+      key: 'weeklyReports',
+    },
+  ];
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Avatar.Text 
-          size={80} 
-          label={user.username.charAt(0).toUpperCase()} 
-          style={styles.avatar}
-        />
-        <Text style={styles.username}>{user.username}</Text>
+      <Card style={styles.profileCard}>
+        <Card.Content>
+          <Text style={styles.username}>{user?.username || 'User'}</Text>
+          <Text style={styles.email}>{user?.email || ''}</Text>
+        </Card.Content>
+      </Card>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Notification Settings</Text>
+        {settingsList.map((item, index) => (
+          <React.Fragment key={item.key}>
+            {renderSettingItem(item)}
+            {index < settingsList.length - 1 && <Divider />}
+          </React.Fragment>
+        ))}
       </View>
 
-      <Card style={styles.card}>
-        <Card.Content>
-          <Text style={styles.sectionTitle}>Account Settings</Text>
-          <TextInput
-            label="Monthly Budget"
-            value={monthlyBudget}
-            onChangeText={setMonthlyBudget}
-            keyboardType="numeric"
-            style={styles.input}
-          />
-          <Button 
-            mode="contained" 
-            onPress={handleUpdateBudget}
-            style={styles.button}
-          >
-            Update Budget
-          </Button>
-        </Card.Content>
-      </Card>
-
-      <Card style={styles.card}>
-        <Card.Content>
-          <Text style={styles.sectionTitle}>Account Information</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Email:</Text>
-            <Text style={styles.value}>{user.username}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Member Since:</Text>
-            <Text style={styles.value}>
-              {new Date(user.createdAt).toLocaleDateString()}
-            </Text>
-          </View>
-        </Card.Content>
-      </Card>
-
-      <Button 
-        mode="outlined" 
-        onPress={handleLogout}
-        style={styles.logoutButton}
-        textColor="#ff4444"
-      >
-        Log Out
-      </Button>
+      <View style={styles.section}>
+        <Button
+          mode="contained"
+          onPress={handleLogout}
+          style={styles.logoutButton}
+          labelStyle={styles.logoutButtonText}
+        >
+          Logout
+        </Button>
+      </View>
     </ScrollView>
   );
 };
@@ -123,53 +142,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  header: {
-    padding: 20,
-    backgroundColor: '#6200ee',
-    alignItems: 'center',
-  },
-  avatar: {
-    backgroundColor: '#fff',
-    marginBottom: 10,
+  profileCard: {
+    margin: 16,
+    elevation: 2,
   },
   username: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    marginBottom: 4,
   },
-  card: {
-    margin: 16,
-    elevation: 4,
+  email: {
+    fontSize: 16,
+    color: '#666',
+  },
+  section: {
+    backgroundColor: '#fff',
+    marginTop: 16,
+    paddingVertical: 8,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  input: {
-    marginBottom: 16,
-  },
-  button: {
-    marginTop: 8,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  label: {
-    fontSize: 16,
-    color: '#666',
-  },
-  value: {
-    fontSize: 16,
-    fontWeight: '500',
+    padding: 16,
+    paddingBottom: 8,
   },
   logoutButton: {
     margin: 16,
-    borderColor: '#ff4444',
+    backgroundColor: '#ff4444',
+  },
+  logoutButtonText: {
+    fontSize: 16,
   },
 });
 
