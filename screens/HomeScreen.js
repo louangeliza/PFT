@@ -66,7 +66,7 @@ const HomeScreen = ({ route }) => {
     setMonthlyTotal(monthSum);
 
     // Check budget threshold and add notification if needed
-    if (monthSum >= monthlyBudget * 0.8) {
+    if (monthSum > 0) {
       addBudgetAlert(monthSum, monthlyBudget);
     }
   }, [monthlyBudget]);

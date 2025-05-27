@@ -13,6 +13,7 @@ Notifications.setNotificationHandler({
 const NOTIFICATIONS_STORAGE_KEY = 'app_notifications';
 const NOTIFICATION_SETTINGS_KEY = 'notification_settings';
 const NOTIFICATIONS_KEY = '@notifications';
+const BUDGET_THRESHOLDS = [80, 90, 95, 100]; // Percentages at which to send notifications
 
 export const setupNotifications = async () => {
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -59,6 +60,22 @@ export const updateNotificationSettings = async (settings) => {
 export const addBudgetAlert = async (monthlyTotal, monthlyBudget) => {
   try {
     const percentage = (monthlyTotal / monthlyBudget) * 100;
+    
+    // Get existing notifications
+    const existingNotifications = await getNotifications();
+    
+    // Check if we already have a notification for this threshold
+    const threshold = BUDGET_THRESHOLDS.find(t => percentage >= t && percentage < t + 5);
+    if (!threshold) return null; // No new threshold reached
+    
+    const existingThresholdNotification = existingNotifications.find(
+      n => n.type === 'budget_alert' && 
+           n.data.threshold === threshold &&
+           new Date(n.timestamp).getDate() === new Date().getDate() // Only check today's notifications
+    );
+    
+    if (existingThresholdNotification) return null; // Already notified for this threshold today
+
     const notification = {
       id: Date.now().toString(),
       type: 'budget_alert',
@@ -68,12 +85,12 @@ export const addBudgetAlert = async (monthlyTotal, monthlyBudget) => {
       data: {
         monthlyTotal,
         monthlyBudget,
-        percentage
+        percentage,
+        threshold
       },
       read: false
     };
 
-    const existingNotifications = await getNotifications();
     const updatedNotifications = [notification, ...existingNotifications];
     await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(updatedNotifications));
     return notification;
