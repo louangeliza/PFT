@@ -1,28 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { IconButton, Badge } from 'react-native-paper';
-import { getUnreadNotificationCount } from '../services/notifications';
-import { useFocusEffect } from '@react-navigation/native';
+import { View, StyleSheet } from 'react-native';
+import { IconButton, Text } from 'react-native-paper';
+import { getUnreadCount } from '../services/notifications';
 
 const NotificationBell = ({ onPress }) => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const loadUnreadCount = async () => {
-    const count = await getUnreadNotificationCount();
-    setUnreadCount(count);
+    try {
+      const count = await getUnreadCount();
+      setUnreadCount(count);
+    } catch (error) {
+      console.error('Error loading unread count:', error);
+    }
   };
 
-  // Refresh count when screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      loadUnreadCount();
-    }, [])
-  );
-
   useEffect(() => {
-    // Initial load
     loadUnreadCount();
-    // Refresh unread count every minute
+    // Refresh count every minute
     const interval = setInterval(loadUnreadCount, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -33,17 +28,16 @@ const NotificationBell = ({ onPress }) => {
         icon="bell"
         size={24}
         onPress={() => {
+          loadUnreadCount(); // Refresh count when bell is pressed
           onPress();
-          loadUnreadCount(); // Refresh count after viewing notifications
         }}
       />
       {unreadCount > 0 && (
-        <Badge
-          size={16}
-          style={styles.badge}
-        >
-          {unreadCount}
-        </Badge>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </Text>
+        </View>
       )}
     </View>
   );
@@ -55,9 +49,20 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
+    top: 8,
+    right: 8,
     backgroundColor: '#ff4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
 
