@@ -28,10 +28,25 @@ const HomeScreen = ({ route }) => {
   };
 
   const getDisplayName = (email) => {
-    if (!email) return 'User';
-    // Get the part before @ and stop at first number or special character
-    const username = email.split('@')[0].split(/[0-9._-]/)[0];
-    return username.charAt(0).toUpperCase() + username.slice(1);
+    console.log('Getting display name for email:', email);
+    if (!email) {
+      console.log('No email provided, returning default');
+      return 'User';
+    }
+    try {
+      // Get the part before @
+      const username = email.split('@')[0];
+      console.log('Extracted username:', username);
+      if (!username) {
+        console.log('No valid username found, returning default');
+        return 'User';
+      }
+      // Capitalize first letter and return
+      return username.charAt(0).toUpperCase() + username.slice(1);
+    } catch (error) {
+      console.error('Error extracting display name:', error);
+      return 'User';
+    }
   };
 
   const calculateTotals = useCallback((expenseList) => {
@@ -77,17 +92,22 @@ const HomeScreen = ({ route }) => {
   const loadUserData = async () => {
     try {
       const userData = await AsyncStorage.getItem('user');
-      console.log('Loaded user data:', userData);
+      console.log('Raw user data from AsyncStorage:', userData);
+      
       if (userData) {
         const parsedUser = JSON.parse(userData);
         console.log('Parsed user data:', parsedUser);
+        
         if (parsedUser && parsedUser.email) {
+          console.log('Setting user with email:', parsedUser.email);
           setUser(parsedUser);
         } else {
-          console.log('No email found in user data');
+          console.log('No email found in parsed user data');
+          setUser(null);
         }
       } else {
         console.log('No user data found in AsyncStorage');
+        setUser(null);
       }
 
       const activeBudgetData = await AsyncStorage.getItem('activeBudget');
@@ -100,6 +120,7 @@ const HomeScreen = ({ route }) => {
       }
     } catch (error) {
       console.error('Error loading user data:', error);
+      setUser(null);
     }
   };
 

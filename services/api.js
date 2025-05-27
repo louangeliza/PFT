@@ -24,10 +24,10 @@ export const loginUser = async (username, password) => {
   try {
     const response = await api.get('/users');
     const user = response.data.find(
-      (user) => user.username === username && user.password === password
+      (user) => user.email === username && user.password === password
     );
     if (!user) {
-      throw new Error('Invalid username or password');
+      throw new Error('Invalid email or password');
     }
     return user;
   } catch (error) {
