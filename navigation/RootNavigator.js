@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
-import { getCurrentUser } from '../services/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Stack = createStackNavigator();
 
@@ -17,9 +17,10 @@ const RootNavigator = () => {
 
   const checkUser = async () => {
     try {
-      const currentUser = await getCurrentUser();
-      console.log('Current user in RootNavigator:', currentUser);
-      setUser(currentUser);
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
     } catch (error) {
       console.error('Error checking user:', error);
     } finally {
@@ -27,8 +28,18 @@ const RootNavigator = () => {
     }
   };
 
+  const handleLogin = async (userData) => {
+    try {
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+    } catch (error) {
+      console.error('Error during login:', error);
+      throw error;
+    }
+  };
+
   if (loading) {
-    return null; // Or a loading screen
+    return null;
   }
 
   return (
@@ -49,7 +60,7 @@ const RootNavigator = () => {
           <Stack.Screen 
             name="Auth" 
             component={AuthNavigator}
-            initialParams={{ onLogin: (userData) => setUser(userData) }}
+            initialParams={{ onLogin: handleLogin }}
           />
         )}
       </Stack.Navigator>

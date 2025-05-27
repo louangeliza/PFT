@@ -9,31 +9,23 @@ const LoginScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    console.log('Login attempt with:', { username, password });
-    
     if (!username || !password) {
-      console.log('Login validation failed: Empty fields');
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     try {
       setLoading(true);
-      console.log('Calling login service...');
       const user = await login(username, password);
-      console.log('Login successful, user:', user);
       
-      // Call the onLogin callback from route params
       if (route.params?.onLogin) {
-        console.log('Calling onLogin callback');
-        route.params.onLogin(user);
+        await route.params.onLogin(user);
       } else {
-        console.error('No onLogin callback found');
-        Alert.alert('Error', 'Navigation failed. Please try again.');
+        throw new Error('Login callback not found');
       }
     } catch (error) {
-      console.error('Login screen error:', error);
-      Alert.alert('Error', error.message || 'Login failed');
+      console.error('Login error:', error);
+      Alert.alert('Error', error.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -45,20 +37,14 @@ const LoginScreen = ({ navigation, route }) => {
       <TextInput
         label="Username"
         value={username}
-        onChangeText={(text) => {
-          console.log('Username changed:', text);
-          setUsername(text);
-        }}
+        onChangeText={setUsername}
         style={styles.input}
         autoCapitalize="none"
       />
       <TextInput
         label="Password"
         value={password}
-        onChangeText={(text) => {
-          console.log('Password changed:', text.length, 'characters');
-          setPassword(text);
-        }}
+        onChangeText={setPassword}
         secureTextEntry
         style={styles.input}
       />
