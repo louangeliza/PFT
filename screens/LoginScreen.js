@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { TextInput, Button, Text, ActivityIndicator } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { login } from '../services/api';
@@ -32,11 +32,6 @@ const LoginScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image
-          source={require('../assets/logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
         <Text style={styles.title}>Finance Tracker</Text>
       </View>
 
@@ -92,13 +87,8 @@ const styles = StyleSheet.create({
     marginTop: 60,
     marginBottom: 40,
   },
-  logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 16,
-  },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#6200ee',
   },
