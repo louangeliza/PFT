@@ -26,8 +26,8 @@ const HomeScreen = ({ route }) => {
 
   const getDisplayName = (email) => {
     if (!email) return 'User';
-    // Get the part before @ and capitalize first letter
-    const username = email.split('@')[0];
+    // Get the part before @ and any special characters
+    const username = email.split('@')[0].split(/[._-]/)[0];
     return username.charAt(0).toUpperCase() + username.slice(1);
   };
 

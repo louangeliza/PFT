@@ -31,10 +31,21 @@ export const getExpenses = async () => {
     if (!user) {
       throw new Error('User not logged in');
     }
+    console.log('Current user:', user);
+    
     const response = await api.get('/expenses');
+    console.log('All expenses:', response.data);
+    
     // Filter expenses for the current user
-    return response.data.filter(expense => expense.userId === user.id);
+    const userExpenses = response.data.filter(expense => {
+      console.log('Comparing expense.userId:', expense.userId, 'with user.id:', user.id);
+      return expense.userId === user.id;
+    });
+    
+    console.log('Filtered user expenses:', userExpenses);
+    return userExpenses;
   } catch (error) {
+    console.error('Error in getExpenses:', error);
     throw error;
   }
 };
@@ -66,9 +77,11 @@ export const createExpense = async (expenseData) => {
       ...expenseData,
       userId: user.id
     };
+    console.log('Creating expense with data:', dataWithUserId);
     const response = await api.post('/expenses', dataWithUserId);
     return response.data;
   } catch (error) {
+    console.error('Error in createExpense:', error);
     throw error;
   }
 };
