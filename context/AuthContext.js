@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('activeBudget');
       setUser(null);
     } catch (error) {
       console.error('Error during logout:', error);

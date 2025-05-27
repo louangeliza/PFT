@@ -20,7 +20,10 @@ const LoginScreen = () => {
     try {
       setLoading(true);
       await login(username, password);
-      navigation.replace('Main');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to login');
     } finally {
@@ -37,11 +40,10 @@ const LoginScreen = () => {
 
       <View style={styles.form}>
         <TextInput
-          label="Email"
+          label="Username"
           value={username}
           onChangeText={setUsername}
           mode="outlined"
-          keyboardType="email-address"
           autoCapitalize="none"
           style={styles.input}
         />
