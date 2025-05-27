@@ -5,9 +5,9 @@ import { createExpense } from '../services/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 const AddExpenseScreen = ({ navigation }) => {
-  const [title, setTitle] = useState('');
+  const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -15,12 +15,12 @@ const AddExpenseScreen = ({ navigation }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!title.trim()) newErrors.title = 'Title is required';
+    if (!name.trim()) newErrors.name = 'Name is required';
     if (!amount.trim()) newErrors.amount = 'Amount is required';
     if (isNaN(amount) || parseFloat(amount) <= 0) {
       newErrors.amount = 'Please enter a valid amount';
     }
-    if (!category.trim()) newErrors.category = 'Category is required';
+    if (!description.trim()) newErrors.description = 'Description is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -31,10 +31,10 @@ const AddExpenseScreen = ({ navigation }) => {
     try {
       setLoading(true);
       const expenseData = {
-        title,
-        amount: parseFloat(amount),
-        category,
-        date: date.toISOString(),
+        name,
+        amount: parseFloat(amount).toFixed(2),
+        description,
+        createdAt: date.toISOString(),
       };
 
       await createExpense(expenseData);
@@ -59,15 +59,15 @@ const AddExpenseScreen = ({ navigation }) => {
       <Text style={styles.title}>Add New Expense</Text>
       
       <TextInput
-        label="Title"
-        value={title}
-        onChangeText={setTitle}
+        label="Name"
+        value={name}
+        onChangeText={setName}
         style={styles.input}
         mode="outlined"
-        error={!!errors.title}
+        error={!!errors.name}
       />
-      <HelperText type="error" visible={!!errors.title}>
-        {errors.title}
+      <HelperText type="error" visible={!!errors.name}>
+        {errors.name}
       </HelperText>
 
       <TextInput
@@ -84,15 +84,15 @@ const AddExpenseScreen = ({ navigation }) => {
       </HelperText>
 
       <TextInput
-        label="Category"
-        value={category}
-        onChangeText={setCategory}
+        label="Description"
+        value={description}
+        onChangeText={setDescription}
         style={styles.input}
         mode="outlined"
-        error={!!errors.category}
+        error={!!errors.description}
       />
-      <HelperText type="error" visible={!!errors.category}>
-        {errors.category}
+      <HelperText type="error" visible={!!errors.description}>
+        {errors.description}
       </HelperText>
 
       <Button

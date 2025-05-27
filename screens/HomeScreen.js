@@ -39,16 +39,16 @@ const HomeScreen = () => {
     <Card style={styles.card}>
       <Card.Content>
         <View style={styles.cardHeader}>
-          <Title>{item.title}</Title>
+          <Title>{item.name}</Title>
           <IconButton
             icon="delete"
             size={20}
             onPress={() => handleDelete(item.id)}
           />
         </View>
-        <Paragraph>Amount: ${item.amount}</Paragraph>
-        <Paragraph>Category: {item.category}</Paragraph>
-        <Paragraph>Date: {new Date(item.date).toLocaleDateString()}</Paragraph>
+        <Paragraph>Amount: ${parseFloat(item.amount).toFixed(2)}</Paragraph>
+        <Paragraph>Description: {item.description}</Paragraph>
+        <Paragraph>Date: {new Date(item.createdAt).toLocaleDateString()}</Paragraph>
       </Card.Content>
     </Card>
   );
