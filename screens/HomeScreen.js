@@ -267,7 +267,7 @@ const HomeScreen = ({ route }) => {
         <Text style={styles.sectionTitle}>Recent Expenses</Text>
         {expenses.length === 0 ? (
           <View style={styles.centered}>
-            <Text style={styles.noExpenses}>No expenses found</Text>
+            <Text style={styles.noExpenses}>No expenses made recently</Text>
             <Text style={styles.addExpenseHint}>Tap the + button to add an expense</Text>
           </View>
         ) : (
@@ -372,6 +372,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#666',
+    textAlign: 'center',
   },
   addExpenseHint: {
     color: '#666',
