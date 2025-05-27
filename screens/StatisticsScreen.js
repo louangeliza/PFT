@@ -152,13 +152,17 @@ const StatisticsScreen = () => {
         <Card.Content>
           <Title style={styles.title}>Daily Spending (Last 30 Days)</Title>
           {dailyData.labels && dailyData.labels.length > 0 ? (
-            <LineChart
+            <BarChart
               data={dailyData}
               width={screenWidth - 40}
               height={220}
               chartConfig={chartConfig}
-              bezier
               style={styles.chart}
+              showValuesOnTopOfBars
+              fromZero
+              yAxisLabel="$"
+              yAxisSuffix=""
+              withInnerLines={false}
             />
           ) : (
             <Text style={styles.noData}>No daily data available</Text>
