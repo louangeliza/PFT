@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
-import { useAuth } from '../context/AuthContext';
-import { useNavigation } from '@react-navigation/native';
+import { login } from '../services/auth';
 
-const LoginScreen = () => {
+const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const navigation = useNavigation();
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -20,12 +17,9 @@ const LoginScreen = () => {
     try {
       setLoading(true);
       await login(username, password);
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Main' }],
-      });
+      navigation.replace('Main');
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to login');
+      Alert.alert('Error', error.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -33,38 +27,38 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Finance Tracker</Text>
-        <Text style={styles.subtitle}>Track your expenses easily</Text>
-      </View>
-
-      <View style={styles.form}>
-        <TextInput
-          label="Username"
-          value={username}
-          onChangeText={setUsername}
-          mode="outlined"
-          autoCapitalize="none"
-          style={styles.input}
-        />
-        <TextInput
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          mode="outlined"
-          secureTextEntry
-          style={styles.input}
-        />
-        <Button
-          mode="contained"
-          onPress={handleLogin}
-          loading={loading}
-          disabled={loading}
-          style={styles.button}
-        >
-          Login
-        </Button>
-      </View>
+      <Text style={styles.title}>Welcome Back</Text>
+      <TextInput
+        label="Email"
+        value={username}
+        onChangeText={setUsername}
+        style={styles.input}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
+      <TextInput
+        label="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        style={styles.input}
+      />
+      <Button
+        mode="contained"
+        onPress={handleLogin}
+        style={styles.button}
+        loading={loading}
+        disabled={loading}
+      >
+        Login
+      </Button>
+      <Button
+        mode="text"
+        onPress={() => navigation.navigate('Register')}
+        style={styles.link}
+      >
+        Don't have an account? Register
+      </Button>
     </View>
   );
 };
@@ -72,33 +66,27 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
     padding: 20,
-    backgroundColor: '#6200ee',
-    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
   },
   title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#fff',
-    opacity: 0.8,
-  },
-  form: {
-    padding: 20,
-    marginTop: 20,
+    marginBottom: 30,
+    textAlign: 'center',
+    color: '#333',
   },
   input: {
     marginBottom: 16,
+    backgroundColor: '#fff',
   },
   button: {
     marginTop: 8,
+    paddingVertical: 8,
+  },
+  link: {
+    marginTop: 16,
   },
 });
 
