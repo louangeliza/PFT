@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Card, Title, Paragraph, Text, ActivityIndicator, IconButton } from 'react-native-paper';
-import { getStoredNotifications, markNotificationAsRead } from '../services/notifications';
+import { View, StyleSheet, FlatList, Alert } from 'react-native';
+import { Text, Card, IconButton, ActivityIndicator } from 'react-native-paper';
+import { getNotifications, markNotificationAsRead, deleteNotification } from '../services/notifications';
 
 const NotificationsScreen = () => {
   const [notifications, setNotifications] = useState([]);
@@ -10,12 +10,11 @@ const NotificationsScreen = () => {
   const loadNotifications = async () => {
     try {
       setLoading(true);
-      const data = await getStoredNotifications();
-      // Filter only budget alerts
-      const budgetAlerts = data.filter(notification => notification.type === 'budget_alert');
-      setNotifications(budgetAlerts);
+      const data = await getNotifications();
+      setNotifications(data);
     } catch (error) {
       console.error('Error loading notifications:', error);
+      Alert.alert('Error', 'Failed to load notifications');
     } finally {
       setLoading(false);
     }
@@ -25,28 +24,41 @@ const NotificationsScreen = () => {
     loadNotifications();
   }, []);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const handleCloseNotification = async (notificationId) => {
+  const handleCloseNotification = async (notification) => {
     try {
-      await markNotificationAsRead(notificationId);
-      // Remove the notification from the local state
+      // Mark as read and delete from storage
+      await markNotificationAsRead(notification.id);
+      await deleteNotification(notification.id);
+      
+      // Update local state
       setNotifications(prevNotifications => 
-        prevNotifications.filter(notification => notification.id !== notificationId)
+        prevNotifications.filter(n => n.id !== notification.id)
       );
     } catch (error) {
       console.error('Error closing notification:', error);
+      Alert.alert('Error', 'Failed to close notification');
     }
   };
+
+  const renderNotification = ({ item }) => (
+    <Card style={styles.notificationCard}>
+      <Card.Content style={styles.cardContent}>
+        <View style={styles.notificationContent}>
+          <Text style={styles.notificationTitle}>{item.title}</Text>
+          <Text style={styles.notificationMessage}>{item.message}</Text>
+          <Text style={styles.notificationTime}>
+            {new Date(item.timestamp).toLocaleString()}
+          </Text>
+        </View>
+        <IconButton
+          icon="close"
+          size={20}
+          onPress={() => handleCloseNotification(item)}
+          style={styles.closeButton}
+        />
+      </Card.Content>
+    </Card>
+  );
 
   if (loading) {
     return (
@@ -57,62 +69,22 @@ const NotificationsScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Title style={styles.headerTitle}>Budget Alerts</Title>
-        <Paragraph style={styles.headerSubtitle}>
-          Stay informed about your spending habits
-        </Paragraph>
-      </View>
-
+    <View style={styles.container}>
       {notifications.length === 0 ? (
         <View style={styles.centered}>
-          <Text style={styles.noNotifications}>No budget alerts</Text>
-          <Text style={styles.noNotificationsSubtitle}>
-            You'll receive alerts when you're close to your monthly budget
-          </Text>
+          <Text style={styles.noNotifications}>No notifications</Text>
         </View>
       ) : (
-        notifications.map((notification) => (
-          <Card key={notification.id} style={styles.card}>
-            <Card.Content>
-              <View style={styles.alertHeader}>
-                <Title style={styles.alertTitle}>{notification.title}</Title>
-                <View style={styles.headerRight}>
-                  <Text style={styles.alertTime}>{formatDate(notification.timestamp)}</Text>
-                  <IconButton
-                    icon="close"
-                    size={20}
-                    onPress={() => handleCloseNotification(notification.id)}
-                    style={styles.closeButton}
-                  />
-                </View>
-              </View>
-              <Paragraph style={styles.alertMessage}>{notification.message}</Paragraph>
-              <View style={styles.budgetDetails}>
-                <Text style={styles.budgetText}>
-                  Current Spending: ${notification.data.monthlyTotal.toFixed(2)}
-                </Text>
-                <Text style={styles.budgetText}>
-                  Monthly Budget: ${notification.data.monthlyBudget.toFixed(2)}
-                </Text>
-                <View style={styles.progressBar}>
-                  <View 
-                    style={[
-                      styles.progressFill, 
-                      { 
-                        width: `${Math.min(notification.data.percentage, 100)}%`,
-                        backgroundColor: notification.data.percentage > 90 ? '#ff4444' : '#ffbb33'
-                      }
-                    ]} 
-                  />
-                </View>
-              </View>
-            </Card.Content>
-          </Card>
-        ))
+        <FlatList
+          data={notifications}
+          renderItem={renderNotification}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.list}
+          refreshing={loading}
+          onRefresh={loadNotifications}
+        />
       )}
-    </ScrollView>
+    </View>
   );
 };
 
@@ -121,85 +93,47 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  header: {
-    padding: 20,
-    backgroundColor: '#6200ee',
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  headerSubtitle: {
-    color: '#fff',
-    opacity: 0.8,
-    marginTop: 4,
-  },
-  card: {
-    margin: 16,
-    marginTop: 8,
-    elevation: 2,
-  },
-  alertHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  alertTitle: {
-    fontSize: 18,
-    color: '#ff4444',
-  },
-  alertTime: {
-    fontSize: 12,
-    color: '#666',
-  },
-  alertMessage: {
-    fontSize: 16,
-    marginBottom: 16,
-  },
-  budgetDetails: {
-    backgroundColor: '#f8f8f8',
-    padding: 12,
-    borderRadius: 8,
-  },
-  budgetText: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 4,
-    marginTop: 8,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
-  noNotifications: {
-    fontSize: 18,
+  list: {
+    padding: 16,
+  },
+  notificationCard: {
+    marginBottom: 12,
+    elevation: 2,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  notificationContent: {
+    flex: 1,
+    marginRight: 8,
+  },
+  notificationTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  noNotificationsSubtitle: {
+  notificationMessage: {
     fontSize: 14,
     color: '#666',
-    textAlign: 'center',
+    marginBottom: 4,
   },
-  headerRight: {
-    alignItems: 'flex-end',
+  notificationTime: {
+    fontSize: 12,
+    color: '#999',
   },
   closeButton: {
     margin: 0,
-    marginLeft: 8,
+  },
+  noNotifications: {
+    fontSize: 16,
+    color: '#666',
   },
 });
 

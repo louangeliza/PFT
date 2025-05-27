@@ -12,6 +12,7 @@ Notifications.setNotificationHandler({
 
 const NOTIFICATIONS_STORAGE_KEY = 'app_notifications';
 const NOTIFICATION_SETTINGS_KEY = 'notification_settings';
+const NOTIFICATIONS_KEY = '@notifications';
 
 export const setupNotifications = async () => {
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -57,36 +58,76 @@ export const updateNotificationSettings = async (settings) => {
 
 export const addBudgetAlert = async (monthlyTotal, monthlyBudget) => {
   try {
-    const settings = await getNotificationSettings();
-    if (!settings.budgetAlerts) return null;
+    const percentage = (monthlyTotal / monthlyBudget) * 100;
+    const notification = {
+      id: Date.now().toString(),
+      type: 'budget_alert',
+      title: 'Budget Alert',
+      message: `You've spent ${percentage.toFixed(1)}% of your monthly budget`,
+      timestamp: new Date().toISOString(),
+      data: {
+        monthlyTotal,
+        monthlyBudget,
+        percentage
+      },
+      read: false
+    };
 
-    const threshold = monthlyBudget * 0.8; // Alert at 80% of budget
-    const percentage = Math.round((monthlyTotal / monthlyBudget) * 100);
-    
-    if (monthlyTotal >= threshold) {
-      const notifications = await getStoredNotifications();
-      const newNotification = {
-        id: Date.now().toString(),
-        type: 'budget_alert',
-        title: 'Budget Alert',
-        message: `You've reached ${percentage}% of your monthly budget!`,
-        timestamp: new Date().toISOString(),
-        read: false,
-        data: {
-          monthlyTotal,
-          monthlyBudget,
-          percentage
-        }
-      };
-      
-      notifications.unshift(newNotification);
-      await storeNotifications(notifications);
-      return newNotification;
-    }
-    return null;
+    const existingNotifications = await getNotifications();
+    const updatedNotifications = [notification, ...existingNotifications];
+    await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(updatedNotifications));
+    return notification;
   } catch (error) {
     console.error('Error adding budget alert:', error);
-    return null;
+    throw error;
+  }
+};
+
+export const getNotifications = async () => {
+  try {
+    const notifications = await AsyncStorage.getItem(NOTIFICATIONS_KEY);
+    return notifications ? JSON.parse(notifications) : [];
+  } catch (error) {
+    console.error('Error getting notifications:', error);
+    return [];
+  }
+};
+
+export const markNotificationAsRead = async (notificationId) => {
+  try {
+    const notifications = await getNotifications();
+    const updatedNotifications = notifications.map(notification =>
+      notification.id === notificationId
+        ? { ...notification, read: true }
+        : notification
+    );
+    await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(updatedNotifications));
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    throw error;
+  }
+};
+
+export const deleteNotification = async (notificationId) => {
+  try {
+    const notifications = await getNotifications();
+    const updatedNotifications = notifications.filter(
+      notification => notification.id !== notificationId
+    );
+    await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(updatedNotifications));
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    throw error;
+  }
+};
+
+export const getUnreadCount = async () => {
+  try {
+    const notifications = await getNotifications();
+    return notifications.filter(notification => !notification.read).length;
+  } catch (error) {
+    console.error('Error getting unread count:', error);
+    return 0;
   }
 };
 
@@ -105,30 +146,6 @@ export const storeNotifications = async (notifications) => {
     await AsyncStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
   } catch (error) {
     console.error('Error storing notifications:', error);
-  }
-};
-
-export const markNotificationAsRead = async (notificationId) => {
-  try {
-    const notifications = await getStoredNotifications();
-    const updatedNotifications = notifications.map(notification => 
-      notification.id === notificationId 
-        ? { ...notification, read: true }
-        : notification
-    );
-    await storeNotifications(updatedNotifications);
-  } catch (error) {
-    console.error('Error marking notification as read:', error);
-  }
-};
-
-export const getUnreadNotificationCount = async () => {
-  try {
-    const notifications = await getStoredNotifications();
-    return notifications.filter(notification => !notification.read).length;
-  } catch (error) {
-    console.error('Error getting unread notification count:', error);
-    return 0;
   }
 };
 
