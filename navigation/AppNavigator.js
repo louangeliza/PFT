@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -109,41 +108,39 @@ const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName={userToken ? "Main" : "Login"}
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: '#6200ee',
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        }}
-      >
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Main"
-          component={MainTabs}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="AddExpense"
-          component={AddExpenseScreen}
-          options={{ title: 'Add Expense' }}
-        />
-        <Stack.Screen
-          name="ExpenseDetails"
-          component={ExpenseDetailsScreen}
-          options={{ title: 'Expense Details' }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Stack.Navigator
+      initialRouteName={userToken ? "Main" : "Login"}
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#6200ee',
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Main"
+        component={MainTabs}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AddExpense"
+        component={AddExpenseScreen}
+        options={{ title: 'Add Expense' }}
+      />
+      <Stack.Screen
+        name="ExpenseDetails"
+        component={ExpenseDetailsScreen}
+        options={{ title: 'Expense Details' }}
+      />
+    </Stack.Navigator>
   );
 };
 
