@@ -4,6 +4,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from '../screens/LoginScreen';
 import MainNavigator from './MainNavigator';
+import NotificationsScreen from '../screens/NotificationsScreen';
+import AddExpenseScreen from '../screens/AddExpenseScreen';
+import ExpenseDetailsScreen from '../screens/ExpenseDetailsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,7 +48,33 @@ const RootNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
-          <Stack.Screen name="Main" component={MainNavigator} />
+          <>
+            <Stack.Screen name="Main" component={MainNavigator} />
+            <Stack.Screen 
+              name="Notifications" 
+              component={NotificationsScreen}
+              options={{ 
+                headerShown: true,
+                title: 'Notifications'
+              }}
+            />
+            <Stack.Screen 
+              name="AddExpense" 
+              component={AddExpenseScreen}
+              options={{ 
+                headerShown: true,
+                title: 'Add Expense'
+              }}
+            />
+            <Stack.Screen 
+              name="ExpenseDetails" 
+              component={ExpenseDetailsScreen}
+              options={{ 
+                headerShown: true,
+                title: 'Expense Details'
+              }}
+            />
+          </>
         ) : (
           <Stack.Screen 
             name="Login" 
