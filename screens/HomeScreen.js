@@ -14,6 +14,7 @@ const HomeScreen = ({ route }) => {
   const [todayTotal, setTodayTotal] = useState(0);
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [monthlyBudget, setMonthlyBudget] = useState(1000); // Default budget
+  const [activeBudget, setActiveBudget] = useState(null);
   const navigation = useNavigation();
 
   const formatAmount = (amount) => {
@@ -66,10 +67,12 @@ const HomeScreen = ({ route }) => {
     setMonthlyTotal(monthSum);
 
     // Check budget threshold and add notification if needed
-    if (monthSum > 0) {
-      addBudgetAlert(monthSum, monthlyBudget);
+    if (activeBudget) {
+      const budgetAmount = activeBudget.amount;
+      const currentAmount = activeBudget.type === 'daily' ? todaySum : monthSum;
+      addBudgetAlert(currentAmount, budgetAmount);
     }
-  }, [monthlyBudget]);
+  }, [activeBudget]);
 
   const loadUserData = async () => {
     try {
@@ -77,9 +80,11 @@ const HomeScreen = ({ route }) => {
       if (userData) {
         setUser(JSON.parse(userData));
       }
-      const budget = await AsyncStorage.getItem('monthlyBudget');
-      if (budget) {
-        setMonthlyBudget(Number(budget));
+      const activeBudgetData = await AsyncStorage.getItem('activeBudget');
+      if (activeBudgetData) {
+        const budget = JSON.parse(activeBudgetData);
+        setActiveBudget(budget);
+        setMonthlyBudget(budget.amount);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -215,15 +220,25 @@ const HomeScreen = ({ route }) => {
     );
   }
 
-  const budgetProgress = (monthlyTotal / monthlyBudget) * 100;
+  const budgetProgress = activeBudget ? 
+    (activeBudget.type === 'daily' ? 
+      (todayTotal / activeBudget.amount) * 100 : 
+      (monthlyTotal / activeBudget.amount) * 100) : 0;
+  
   const budgetColor = budgetProgress >= 100 ? '#ff4444' : budgetProgress >= 90 ? '#ffbb33' : '#00C851';
+  
   const getBudgetMessage = () => {
+    if (!activeBudget) return null;
+    
+    const budgetType = activeBudget.type === 'daily' ? 'daily' : 'monthly';
+    const currentAmount = activeBudget.type === 'daily' ? todayTotal : monthlyTotal;
+    
     if (budgetProgress >= 100) {
-      return '⚠️ You have exceeded your monthly budget!';
+      return `⚠️ You have exceeded your ${budgetType} budget!`;
     } else if (budgetProgress >= 90) {
-      return '⚠️ You are very close to your monthly budget!';
+      return `⚠️ You are very close to your ${budgetType} budget!`;
     } else if (budgetProgress >= 80) {
-      return '⚠️ You are approaching your monthly budget';
+      return `⚠️ You are approaching your ${budgetType} budget`;
     }
     return null;
   };
@@ -243,9 +258,9 @@ const HomeScreen = ({ route }) => {
 
           <Card style={styles.statsCard}>
             <Card.Content>
-              <Title>Monthly Budget</Title>
+              <Title>{activeBudget ? `${activeBudget.type === 'daily' ? 'Daily' : 'Monthly'} Budget` : 'Monthly Budget'}</Title>
               <Paragraph style={styles.amountText}>
-                ${formatAmount(monthlyTotal)} / ${formatAmount(monthlyBudget)}
+                ${formatAmount(activeBudget ? (activeBudget.type === 'daily' ? todayTotal : monthlyTotal) : monthlyTotal)} / ${formatAmount(activeBudget ? activeBudget.amount : monthlyBudget)}
               </Paragraph>
               <View style={styles.progressBar}>
                 <View 
