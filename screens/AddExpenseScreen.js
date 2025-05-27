@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { TextInput, Button, Text, HelperText } from 'react-native-paper';
-import { createExpense } from '../services/api';
+import { createExpense, getExpenses } from '../services/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -13,6 +13,27 @@ const AddExpenseScreen = ({ navigation }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [expenses, setExpenses] = useState([]);
+  const [monthlyBudget, setMonthlyBudget] = useState(1000); // Default budget
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [expensesData, budget] = await Promise.all([
+        getExpenses(),
+        AsyncStorage.getItem('monthlyBudget')
+      ]);
+      setExpenses(expensesData);
+      if (budget) {
+        setMonthlyBudget(Number(budget));
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -46,12 +67,14 @@ const AddExpenseScreen = ({ navigation }) => {
       });
       
       const monthlyTotal = monthlyExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-      const budgetProgress = (monthlyTotal / monthlyBudget) * 100;
+      const newExpenseAmount = parseFloat(amount);
+      const totalWithNewExpense = monthlyTotal + newExpenseAmount;
+      const budgetProgress = (totalWithNewExpense / monthlyBudget) * 100;
 
-      if (budgetProgress >= 100) {
+      if (budgetProgress > 100) {
         Alert.alert(
           'Budget Exceeded',
-          'You have exceeded your monthly budget. Cannot add more expenses this month.',
+          'Adding this expense would exceed your monthly budget. Cannot add more expenses this month.',
           [{ text: 'OK' }]
         );
         setLoading(false);
@@ -60,7 +83,7 @@ const AddExpenseScreen = ({ navigation }) => {
 
       const expenseData = {
         name,
-        amount: parseFloat(amount),
+        amount: newExpenseAmount,
         description,
         createdAt: date.toISOString(),
         userId: user.id
