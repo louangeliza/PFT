@@ -216,7 +216,17 @@ const HomeScreen = ({ route }) => {
   }
 
   const budgetProgress = (monthlyTotal / monthlyBudget) * 100;
-  const budgetColor = budgetProgress > 90 ? '#ff4444' : budgetProgress > 70 ? '#ffbb33' : '#00C851';
+  const budgetColor = budgetProgress >= 100 ? '#ff4444' : budgetProgress >= 90 ? '#ffbb33' : '#00C851';
+  const getBudgetMessage = () => {
+    if (budgetProgress >= 100) {
+      return '⚠️ You have exceeded your monthly budget!';
+    } else if (budgetProgress >= 90) {
+      return '⚠️ You are very close to your monthly budget!';
+    } else if (budgetProgress >= 80) {
+      return '⚠️ You are approaching your monthly budget';
+    }
+    return null;
+  };
 
   return (
     <View style={styles.container}>
@@ -245,9 +255,9 @@ const HomeScreen = ({ route }) => {
                   ]} 
                 />
               </View>
-              {budgetProgress > 90 && (
+              {getBudgetMessage() && (
                 <Text style={[styles.warningText, { color: budgetColor }]}>
-                  ⚠️ You're close to your monthly budget!
+                  {getBudgetMessage()}
                 </Text>
               )}
             </Card.Content>
