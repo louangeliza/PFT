@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, FlatList, Alert, TouchableOpacity, ScrollView } from 'react-native';
 import { FAB, List, Text, ActivityIndicator, IconButton, Card, Title, Paragraph } from 'react-native-paper';
 import { getExpenses, deleteExpense } from '../services/api';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NotificationBell from '../components/NotificationBell';
 
 const HomeScreen = ({ route }) => {
   const [expenses, setExpenses] = useState([]);
@@ -31,30 +32,38 @@ const HomeScreen = ({ route }) => {
     return username.charAt(0).toUpperCase() + username.slice(1);
   };
 
-  const calculateTotals = (expenses) => {
-    const today = new Date().toISOString().split('T')[0];
+  const calculateTotals = useCallback((expenseList) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
 
     let todaySum = 0;
     let monthSum = 0;
 
-    expenses.forEach(expense => {
+    expenseList.forEach(expense => {
       const expenseDate = new Date(expense.createdAt);
-      const expenseDay = expenseDate.toISOString().split('T')[0];
+      const expenseAmount = Number(expense.amount) || 0;
       
-      if (expenseDay === today) {
-        todaySum += Number(expense.amount);
+      // Check if expense is from today
+      if (expenseDate.getDate() === today.getDate() &&
+          expenseDate.getMonth() === today.getMonth() &&
+          expenseDate.getFullYear() === today.getFullYear()) {
+        todaySum += expenseAmount;
       }
       
-      if (expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) {
-        monthSum += Number(expense.amount);
+      // Check if expense is from current month
+      if (expenseDate.getMonth() === currentMonth && 
+          expenseDate.getFullYear() === currentYear) {
+        monthSum += expenseAmount;
       }
     });
 
+    console.log('Calculated totals:', { todaySum, monthSum });
     setTodayTotal(todaySum);
     setMonthlyTotal(monthSum);
-  };
+  }, []);
 
   const loadUserData = async () => {
     try {
@@ -93,7 +102,7 @@ const HomeScreen = ({ route }) => {
   };
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       loadUserData();
       loadExpenses();
     }, [])
@@ -105,6 +114,16 @@ const HomeScreen = ({ route }) => {
       navigation.setParams({ refresh: undefined });
     }
   }, [route.params?.refresh]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <NotificationBell
+          onPress={() => navigation.navigate('Notifications')}
+        />
+      ),
+    });
+  }, [navigation]);
 
   const handleDelete = async (id) => {
     Alert.alert(
@@ -120,16 +139,27 @@ const HomeScreen = ({ route }) => {
           style: 'destructive',
           onPress: async () => {
             try {
+              setLoading(true);
               await deleteExpense(id);
-              setExpenses(expenses.filter(expense => expense.id !== id));
+              const updatedExpenses = expenses.filter(expense => expense.id !== id);
+              setExpenses(updatedExpenses);
+              calculateTotals(updatedExpenses);
               Alert.alert('Success', 'Expense deleted successfully');
             } catch (error) {
               console.error('Error deleting expense:', error);
-              if (error.message === 'Unauthorized to delete this expense') {
+              if (error.message.includes('Too many requests')) {
+                Alert.alert(
+                  'Rate Limit Exceeded',
+                  'Please wait a moment before trying again.',
+                  [{ text: 'OK' }]
+                );
+              } else if (error.message === 'Unauthorized to delete this expense') {
                 Alert.alert('Error', 'You are not authorized to delete this expense');
               } else {
-                Alert.alert('Error', 'Failed to delete expense');
+                Alert.alert('Error', 'Failed to delete expense. Please try again.');
               }
+            } finally {
+              setLoading(false);
             }
           },
         },

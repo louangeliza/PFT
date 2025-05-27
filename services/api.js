@@ -10,6 +10,16 @@ const api = axios.create({
   },
 });
 
+// Add retry logic for 429 errors
+api.interceptors.response.use(null, async (error) => {
+  if (error.response?.status === 429) {
+    // Wait for 1 second before retrying
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return api.request(error.config);
+  }
+  return Promise.reject(error);
+});
+
 export const loginUser = async (username, password) => {
   try {
     const response = await api.get('/users');
@@ -92,14 +102,22 @@ export const deleteExpense = async (id) => {
     if (!user) {
       throw new Error('User not logged in');
     }
+
     // First check if the expense belongs to the user
     const expense = await getExpenseById(id);
     if (expense.userId !== user.id) {
       throw new Error('Unauthorized to delete this expense');
     }
+
+    // Add a small delay before making the delete request
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     const response = await api.delete(`/expenses/${id}`);
     return response.data;
   } catch (error) {
+    if (error.response?.status === 429) {
+      throw new Error('Too many requests. Please try again in a moment.');
+    }
     throw error;
   }
 };
