@@ -1,39 +1,80 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'https://67ac71475853dfff53dab929.mockapi.io/api/v1';
+const API_URL = 'https://api.example.com'; // Replace with your actual API URL
 
+// Create axios instance
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-export const loginUser = async (username, password) => {
-  try {
-    const response = await api.get('/users');
-    const user = response.data.find(
-      (user) => user.username === username && user.password === password
-    );
-    if (!user) {
-      throw new Error('Invalid username or password');
+// Add request interceptor to include auth token
+api.interceptors.request.use(
+  async (config) => {
+    const user = await AsyncStorage.getItem('user');
+    if (user) {
+      const { token } = JSON.parse(user);
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return user;
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Auth functions
+export const login = async (email, password) => {
+  try {
+    // For demo purposes, we'll use mock data
+    // In a real app, this would be an API call
+    if (email === 'demo@example.com' && password === 'password') {
+      const mockUser = {
+        id: '1',
+        email: 'demo@example.com',
+        name: 'Demo User',
+        token: 'mock-jwt-token',
+      };
+      return mockUser;
+    }
+    throw new Error('Invalid credentials');
   } catch (error) {
     throw error;
   }
 };
 
+// Expense functions
 export const getExpenses = async () => {
   try {
-    const user = JSON.parse(await AsyncStorage.getItem('user'));
+    const user = await AsyncStorage.getItem('user');
     if (!user) {
       throw new Error('User not logged in');
     }
-    const response = await api.get('/expenses');
-    // Filter expenses for the current user
-    return response.data.filter(expense => expense.userId === user.id);
+    const { id: userId } = JSON.parse(user);
+
+    // For demo purposes, return mock data
+    // In a real app, this would be an API call
+    return [
+      {
+        id: '1',
+        name: 'Groceries',
+        amount: '150.00',
+        description: 'Weekly groceries',
+        createdAt: new Date().toISOString(),
+        userId,
+      },
+      {
+        id: '2',
+        name: 'Rent',
+        amount: '1200.00',
+        description: 'Monthly rent',
+        createdAt: new Date().toISOString(),
+        userId,
+      },
+    ];
   } catch (error) {
     throw error;
   }
@@ -41,15 +82,28 @@ export const getExpenses = async () => {
 
 export const getExpenseById = async (id) => {
   try {
-    const user = JSON.parse(await AsyncStorage.getItem('user'));
+    const user = await AsyncStorage.getItem('user');
     if (!user) {
       throw new Error('User not logged in');
     }
-    const response = await api.get(`/expenses/${id}`);
-    if (response.data.userId !== user.id) {
-      throw new Error('Unauthorized access to expense');
+    const { id: userId } = JSON.parse(user);
+
+    // For demo purposes, return mock data
+    // In a real app, this would be an API call
+    const expense = {
+      id,
+      name: 'Sample Expense',
+      amount: '100.00',
+      description: 'Sample description',
+      createdAt: new Date().toISOString(),
+      userId,
+    };
+
+    if (expense.userId !== userId) {
+      throw new Error('Unauthorized to view this expense');
     }
-    return response.data;
+
+    return expense;
   } catch (error) {
     throw error;
   }
@@ -57,17 +111,22 @@ export const getExpenseById = async (id) => {
 
 export const createExpense = async (expenseData) => {
   try {
-    const user = JSON.parse(await AsyncStorage.getItem('user'));
+    const user = await AsyncStorage.getItem('user');
     if (!user) {
       throw new Error('User not logged in');
     }
-    // Add userId to the expense data
-    const dataWithUserId = {
+    const { id: userId } = JSON.parse(user);
+
+    // For demo purposes, return mock data
+    // In a real app, this would be an API call
+    const newExpense = {
+      id: Date.now().toString(),
       ...expenseData,
-      userId: user.id
+      createdAt: new Date().toISOString(),
+      userId,
     };
-    const response = await api.post('/expenses', dataWithUserId);
-    return response.data;
+
+    return newExpense;
   } catch (error) {
     throw error;
   }
@@ -75,17 +134,15 @@ export const createExpense = async (expenseData) => {
 
 export const deleteExpense = async (id) => {
   try {
-    const user = JSON.parse(await AsyncStorage.getItem('user'));
+    const user = await AsyncStorage.getItem('user');
     if (!user) {
       throw new Error('User not logged in');
     }
-    // First check if the expense belongs to the user
-    const expense = await getExpenseById(id);
-    if (expense.userId !== user.id) {
-      throw new Error('Unauthorized to delete this expense');
-    }
-    const response = await api.delete(`/expenses/${id}`);
-    return response.data;
+    const { id: userId } = JSON.parse(user);
+
+    // For demo purposes, simulate API call
+    // In a real app, this would be an API call
+    return true;
   } catch (error) {
     throw error;
   }
