@@ -204,4 +204,43 @@ export const clearAllNotifications = async () => {
   } catch (error) {
     console.error('Error clearing notifications:', error);
   }
+};
+
+export const addExpenseNotification = async (expense, currentAmount, budgetAmount, budgetType = 'monthly') => {
+  try {
+    // Get existing notifications
+    const notifications = await getNotifications();
+    
+    // Calculate budget percentage
+    const budgetPercentage = (currentAmount / budgetAmount) * 100;
+    
+    // Create message with expense details and budget status
+    const message = `💰 New expense: $${expense.amount.toFixed(2)} for ${expense.name}\n` +
+                   `📊 You've used ${budgetPercentage.toFixed(1)}% of your ${budgetType} budget`;
+
+    const newNotification = {
+      id: Date.now().toString(),
+      message,
+      type: 'expense',
+      budgetType,
+      expenseId: expense.id,
+      budgetPercentage,
+      createdAt: new Date().toISOString(),
+      read: false
+    };
+
+    // Add new notification to the beginning of the array
+    notifications.unshift(newNotification);
+    
+    // Save updated notifications
+    await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+
+    // Also check if we need to add a budget alert
+    await addBudgetAlert(currentAmount, budgetAmount, budgetType);
+    
+    return newNotification;
+  } catch (error) {
+    console.error('Error adding expense notification:', error);
+    return null;
+  }
 }; 

@@ -4,8 +4,10 @@ import { TextInput, Button, Text, HelperText } from 'react-native-paper';
 import { createExpense, getExpenses } from '../services/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import { addExpenseNotification } from '../services/notifications';
 
-const AddExpenseScreen = ({ navigation }) => {
+const AddExpenseScreen = () => {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -15,9 +17,12 @@ const AddExpenseScreen = ({ navigation }) => {
   const [errors, setErrors] = useState({});
   const [expenses, setExpenses] = useState([]);
   const [monthlyBudget, setMonthlyBudget] = useState(1000); // Default budget
+  const [activeBudget, setActiveBudget] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     loadData();
+    loadActiveBudget();
   }, []);
 
   const loadData = async () => {
@@ -32,6 +37,17 @@ const AddExpenseScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Error loading data:', error);
+    }
+  };
+
+  const loadActiveBudget = async () => {
+    try {
+      const activeBudgetData = await AsyncStorage.getItem('activeBudget');
+      if (activeBudgetData) {
+        setActiveBudget(JSON.parse(activeBudgetData));
+      }
+    } catch (error) {
+      console.error('Error loading active budget:', error);
     }
   };
 
@@ -106,6 +122,48 @@ const AddExpenseScreen = ({ navigation }) => {
       console.log('Creating expense with data:', expenseData);
       const response = await createExpense(expenseData);
       console.log('Expense created successfully:', response);
+
+      // If there's an active budget, add a notification
+      if (activeBudget) {
+        // Calculate current total based on budget type
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let currentAmount = 0;
+        if (activeBudget.type === 'daily') {
+          // For daily budget, only count today's expenses
+          const todayExpenses = await getExpenses();
+          currentAmount = todayExpenses
+            .filter(expense => {
+              const expenseDate = new Date(expense.createdAt);
+              return expenseDate.getDate() === today.getDate() &&
+                     expenseDate.getMonth() === today.getMonth() &&
+                     expenseDate.getFullYear() === today.getFullYear();
+            })
+            .reduce((sum, expense) => sum + Number(expense.amount), 0);
+        } else {
+          // For monthly budget, count all expenses in current month
+          const monthExpenses = await getExpenses();
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
+          
+          currentAmount = monthExpenses
+            .filter(expense => {
+              const expenseDate = new Date(expense.createdAt);
+              return expenseDate.getMonth() === currentMonth &&
+                     expenseDate.getFullYear() === currentYear;
+            })
+            .reduce((sum, expense) => sum + Number(expense.amount), 0);
+        }
+
+        // Add notification for the new expense
+        await addExpenseNotification(
+          response,
+          currentAmount,
+          activeBudget.amount,
+          activeBudget.type
+        );
+      }
 
       Alert.alert(
         'Success',
